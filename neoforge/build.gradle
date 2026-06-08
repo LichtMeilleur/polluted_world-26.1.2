@@ -94,8 +94,7 @@ configurations {
 }
 
 dependencies {
-    implementation "curse.maven:geckolib-388172:${rootProject.geckolib_curse_id}"
-    localRuntime "curse.maven:geckolib-388172:${rootProject.geckolib_curse_id}"
+
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

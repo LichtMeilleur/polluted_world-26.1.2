@@ -10,7 +10,6 @@ neoForge {
 }
 
 dependencies {
-    compileOnly "curse.maven:geckolib-388172:${rootProject.geckolib_curse_id}"
 }
 
 tasks.withType(JavaCompile).configureEach {

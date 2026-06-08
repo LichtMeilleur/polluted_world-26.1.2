@@ -45,7 +45,7 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "blue_student"
+rootProject.name = "polluted_world"
 
 include("fabric")
 include("neoforge")

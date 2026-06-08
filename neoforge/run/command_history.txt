@@ -1,2 +1,0 @@
-/gamemode survival
-/gamemode creative

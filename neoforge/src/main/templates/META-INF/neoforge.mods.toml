@@ -1,31 +1,24 @@
 license="All Rights Reserved"
 
 [[mods]]
-modId="blue_student"
+modId="polluted_world"
 version="1.4.3"
-displayName="Blue Student"
+displayName="polluted_world"
 authors="LichtMeilleur"
 description='''
-Blue Archive inspired student companion mod.
+polluted world is ground pollution
 '''
 
-[[dependencies.blue_student]]
+[[dependencies.polluted_world]]
 modId="neoforge"
 type="required"
 versionRange="[26.1.2.42-beta,)"
 ordering="NONE"
 side="BOTH"
 
-[[dependencies.blue_student]]
+[[dependencies.polluted_world]]
 modId="minecraft"
 type="required"
 versionRange="[26.1.2]"
 ordering="NONE"
-side="BOTH"
-
-[[dependencies.blue_student]]
-modId="geckolib"
-type="required"
-versionRange="[5.5.1,)"
-ordering="AFTER"
 side="BOTH"
