@@ -1,0 +1,34 @@
+{
+	"schemaVersion": 1,
+	"id": "polluted_world",
+	"version": "1.0.0",
+	"name": "Polluted World",
+	"description": "Summon student companions and revive them via a linked bed.",
+	"authors": [
+		"LichtMeilleur"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/FabricMC/fabric-example-mod"
+	},
+	"license": "ARR",
+
+	"environment": "*",
+	"main": [
+		"com.licht_meilleur.polluted_world.PollutedWorldFabric"
+	],
+	"client": [
+		"com.licht_meilleur.polluted_world.PollutedWorldClient"
+	],
+
+	"depends": {
+		"fabricloader": ">=0.18.6",
+		"minecraft": "~26.1.1",
+		"java": ">=25",
+		"fabric-api": "*"
+
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
