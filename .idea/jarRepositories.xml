@@ -66,5 +66,15 @@
       <option name="name" value="maven" />
       <option name="url" value="https://cursemaven.com/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="LoomLocalRemappedMods" />
+      <option name="name" value="LoomLocalRemappedMods" />
+      <option name="url" value="file:/$PROJECT_DIR$/../../minecraft%20orgenal%20mod%20with%20GPT/polluted_world/.gradle/loom-cache/remapped_mods/" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="LoomLocalMinecraft" />
+      <option name="name" value="LoomLocalMinecraft" />
+      <option name="url" value="file:/$PROJECT_DIR$/../../minecraft%20orgenal%20mod%20with%20GPT/polluted_world/.gradle/loom-cache/minecraftMaven/" />
+    </remote-repository>
   </component>
 </project>

@@ -4,7 +4,7 @@
 java.base/java.lang.invoke=ALL-UNNAMED
 --add-exports
 jdk.naming.dns/com.sun.jndi.dns=java.naming
-"-Dlog4j2.configurationFile=J:\\minecraft orgenal mod with GPT\\blue_student\\neoforge\\build\\moddev\\clientLog4j2.xml"
+"-Dlog4j2.configurationFile=J:\\minecraft orgenal mod with GPT\\polluted_world\\neoforge\\build\\moddev\\clientLog4j2.xml"
 -Djava.net.preferIPv6Addresses=system
 -Dneoforge.enableGameTest=true
 -Dneoforge.enabledGameTestNamespaces=blue_student
