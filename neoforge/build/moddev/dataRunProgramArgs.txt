@@ -1,0 +1,17 @@
+# Main Class
+net.neoforged.fml.startup.DataClient
+
+# NeoForge Run-Type Program Arguments
+--assetIndex
+30
+--assetsDir
+C:\\Users\\Owner\\.gradle\\caches\\neoformruntime\\assets
+
+# User Supplied Program Arguments
+--mod
+blue_student
+--all
+--output
+"J:\\minecraft orgenal mod with GPT\\polluted_world\\neoforge\\src\\generated\\resources"
+--existing
+"J:\\minecraft orgenal mod with GPT\\polluted_world\\neoforge\\src\\main\\resources"
