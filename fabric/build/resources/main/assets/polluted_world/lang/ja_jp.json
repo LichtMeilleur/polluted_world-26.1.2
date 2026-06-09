@@ -1,5 +1,6 @@
 {
-  "itemGroup.polluted_world": "Polluted World",
   "item.polluted_world.gas_mask": "ガスマスク",
-  "item.polluted_world.filter": "フィルター"
+  "item.polluted_world.filter": "フィルター",
+  "itemGroup.polluted_world": "Polluted World",
+  "message.polluted_world.no_filter": "フィルターがありません"
 }

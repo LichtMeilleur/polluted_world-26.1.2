@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "IFI",
+    "FCF",
+    "IFI"
+  ],
+  "key": {
+    "F": "polluted_world:filter",
+    "C": "polluted_world:activated_charcoal",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "polluted_world:high_filter",
+    "count": 1
+  }
+}

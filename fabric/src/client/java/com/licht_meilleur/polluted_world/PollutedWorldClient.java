@@ -1,4 +1,11 @@
 package com.licht_meilleur.polluted_world;
 
-public class PollutedWorldClient {
+import net.fabricmc.api.ClientModInitializer;
+
+public class PollutedWorldClient implements ClientModInitializer {
+
+    @Override
+    public void onInitializeClient() {
+
+    }
 }

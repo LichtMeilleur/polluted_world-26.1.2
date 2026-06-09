@@ -13,18 +13,21 @@ public final class FabricItemGroups {
     private FabricItemGroups() {
     }
 
+    public static final CreativeModeTab POLLUTED_WORLD_TAB =
+            CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
+                    .title(Component.translatable("itemGroup.polluted_world"))
+                    .icon(() -> new ItemStack(ModItems.GAS_MASK))
+                    .displayItems((parameters, output) -> {
+                        output.accept(ModItems.GAS_MASK);
+                        output.accept(ModItems.FILTER);
+                    })
+                    .build();
+
     public static void register() {
         Registry.register(
                 BuiltInRegistries.CREATIVE_MODE_TAB,
                 PollutedWorldMod.id("polluted_world"),
-                CreativeModeTab.builder(CreativeModeTab.Row.TOP, 0)
-                        .title(Component.translatable("itemGroup.polluted_world"))
-                        .icon(() -> new ItemStack(ModItems.GAS_MASK))
-                        .displayItems((parameters, output) -> {
-                            output.accept(ModItems.GAS_MASK);
-                            output.accept(ModItems.FILTER);
-                        })
-                        .build()
+                POLLUTED_WORLD_TAB
         );
     }
 }

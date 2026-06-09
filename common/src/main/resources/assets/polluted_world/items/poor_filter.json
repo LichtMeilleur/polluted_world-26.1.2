@@ -1,0 +1,6 @@
+{
+  "model": {
+    "type": "minecraft:model",
+    "model": "polluted_world:item/poor_filter"
+  }
+}

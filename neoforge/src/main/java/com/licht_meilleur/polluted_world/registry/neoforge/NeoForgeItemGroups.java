@@ -23,7 +23,10 @@ public final class NeoForgeItemGroups {
                         .icon(() -> new ItemStack(NeoForgeItems.GAS_MASK.get()))
                         .displayItems((parameters, output) -> {
                             output.accept(NeoForgeItems.GAS_MASK.get());
+                            output.accept(NeoForgeItems.ACTIVATED_CHARCOAL.get());
+                            output.accept(NeoForgeItems.POOR_FILTER.get());
                             output.accept(NeoForgeItems.FILTER.get());
+                            output.accept(NeoForgeItems.HIGH_FILTER.get());
                         })
                         .build()
         );

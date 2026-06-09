@@ -1,5 +1,6 @@
 {
-  "itemGroup.polluted_world": "Polluted World",
   "item.polluted_world.gas_mask": "Gas Mask",
-  "item.polluted_world.filter": "Filter"
+  "item.polluted_world.filter": "Filter",
+  "itemGroup.polluted_world": "Polluted World",
+  "message.polluted_world.no_filter": "No filter installed"
 }
