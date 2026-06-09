@@ -1,0 +1,11 @@
+/give Player277 polluted_world:gas_mask
+/give Player870 polluted_world:filter
+/gamemode survival
+/gamemode creative
+/gamemode survival
+/gamemode creative
+/gamemode survival
+/gamemode adventure
+/gamemode creative
+/gamemode survival
+/gamemode creative

@@ -1,0 +1,23 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "minecraft:crafting_table": 1
+    },
+    "minecraft:picked_up": {
+      "polluted_world:filter": 1
+    },
+    "minecraft:custom": {
+      "minecraft:interact_with_crafting_table": 1,
+      "minecraft:time_since_rest": 2358,
+      "minecraft:walk_one_cm": 2463,
+      "minecraft:total_world_time": 2358,
+      "minecraft:leave_game": 1,
+      "minecraft:fly_one_cm": 6670,
+      "minecraft:play_time": 2358,
+      "minecraft:climb_one_cm": 12,
+      "minecraft:jump": 2,
+      "minecraft:time_since_death": 2358
+    }
+  },
+  "DataVersion": 4790
+}

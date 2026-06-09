@@ -18,8 +18,11 @@ public final class FabricItemGroups {
                     .title(Component.translatable("itemGroup.polluted_world"))
                     .icon(() -> new ItemStack(ModItems.GAS_MASK))
                     .displayItems((parameters, output) -> {
-                        output.accept(ModItems.GAS_MASK);
-                        output.accept(ModItems.FILTER);
+                                output.accept(ModItems.GAS_MASK);
+                                output.accept(ModItems.ACTIVATED_CHARCOAL);
+                                output.accept(ModItems.POOR_FILTER);
+                                output.accept(ModItems.FILTER);
+                                output.accept(ModItems.HIGH_FILTER);
                     })
                     .build();
 

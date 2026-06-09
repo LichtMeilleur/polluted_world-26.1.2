@@ -1,0 +1,19 @@
+{
+  "stats": {
+    "minecraft:picked_up": {
+      "minecraft:glass_pane": 2,
+      "minecraft:leather": 5,
+      "minecraft:iron_ingot": 1
+    },
+    "minecraft:custom": {
+      "minecraft:interact_with_crafting_table": 1,
+      "minecraft:time_since_rest": 579,
+      "minecraft:walk_one_cm": 64,
+      "minecraft:total_world_time": 579,
+      "minecraft:leave_game": 1,
+      "minecraft:play_time": 579,
+      "minecraft:time_since_death": 579
+    }
+  },
+  "DataVersion": 4790
+}

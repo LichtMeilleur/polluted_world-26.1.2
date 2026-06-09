@@ -134,12 +134,32 @@ public final class PollutionLogic {
     }
 
     public static ItemStack findFilter(ServerPlayer player) {
+
         Inventory inv = player.getInventory();
 
+        // 高性能
         for (int i = 0; i < inv.getContainerSize(); i++) {
             ItemStack stack = inv.getItem(i);
 
-            if (isFilter(stack)) {
+            if (isItem(stack, "high_filter")) {
+                return stack;
+            }
+        }
+
+        // 標準
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+
+            if (isItem(stack, "filter")) {
+                return stack;
+            }
+        }
+
+        // 粗悪
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+
+            if (isItem(stack, "poor_filter")) {
                 return stack;
             }
         }
