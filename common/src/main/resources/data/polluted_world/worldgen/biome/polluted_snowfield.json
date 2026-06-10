@@ -1,0 +1,33 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.0,
+  "downfall": 0.8,
+  "effects": {
+    "sky_color": 7368816,
+    "fog_color": 7829367,
+    "water_color": 3750089,
+    "water_fog_color": 329011,
+    "grass_color": 6842472,
+    "foliage_color": 6842472
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:patch_dead_bush"
+    ],
+    [
+      "minecraft:freeze_top_layer"
+    ]
+  ]
+}

@@ -8,7 +8,7 @@
   ],
   "key": {
     "W": "minecraft:white_wool",
-    "C": "polluted_world:activated_charcoal",
+    "C": "minecraft:charcoal",
     "I": "minecraft:iron_ingot"
   },
   "result": {

@@ -13,6 +13,9 @@
 		"main": [
 			"com.licht_meilleur.polluted_world.PollutedWorldFabric"
 		],
+		"terrablender": [
+			"com.licht_meilleur.polluted_world.PollutedWorldTerraBlender"
+		],
 		"client": [
 			"com.licht_meilleur.polluted_world.PollutedWorldClient"
 		]

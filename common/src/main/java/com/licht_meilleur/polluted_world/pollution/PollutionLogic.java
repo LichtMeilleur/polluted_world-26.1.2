@@ -1,6 +1,7 @@
 package com.licht_meilleur.polluted_world.pollution;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
+import com.licht_meilleur.polluted_world.world.ModBiomeTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
@@ -32,7 +33,7 @@ public final class PollutionLogic {
         if (!level.dimension().equals(Level.OVERWORLD)) return;
 
         if (player.tickCount % 100 == 0) {
-            cleanupSurfaceAnimals(level, player.blockPosition());
+
             protectSurfaceMonstersFromSun(level, player.blockPosition());
         }
 
@@ -77,6 +78,10 @@ public final class PollutionLogic {
             return 0;
         }
 
+        if (!level.getBiome(pos).is(ModBiomeTags.POLLUTED_BIOMES)) {
+            return 0;
+        }
+
         int surfaceY = level.getHeight(
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 pos.getX(),
@@ -86,18 +91,18 @@ public final class PollutionLogic {
         int depth = surfaceY - pos.getY();
 
         if (level.canSeeSky(pos)) {
-            return 3; // 地上露出：強汚染
+            return 3;
         }
 
         if (depth < WEAK_DEPTH) {
-            return 2; // 浅い地下：中汚染
+            return 2;
         }
 
         if (depth < SAFE_DEPTH) {
-            return 1; // 深度不足：弱汚染
+            return 1;
         }
 
-        return 0; // 安全
+        return 0;
     }
 
     public static boolean isPollutedPosition(Level level, BlockPos pos) {
@@ -192,15 +197,7 @@ public final class PollutionLogic {
                 .equals(PollutedWorldMod.id(name));
     }
 
-    private static void cleanupSurfaceAnimals(ServerLevel level, BlockPos center) {
-        AABB area = new AABB(center).inflate(48.0D, 32.0D, 48.0D);
 
-        for (Animal animal : level.getEntitiesOfClass(Animal.class, area)) {
-            if (isPollutedPosition(level, animal.blockPosition())) {
-                animal.discard();
-            }
-        }
-    }
 
     private static void protectSurfaceMonstersFromSun(ServerLevel level, BlockPos center) {
         AABB area = new AABB(center).inflate(64.0D, 48.0D, 64.0D);

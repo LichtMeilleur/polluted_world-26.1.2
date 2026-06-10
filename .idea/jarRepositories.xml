@@ -76,5 +76,10 @@
       <option name="name" value="LoomLocalMinecraft" />
       <option name="url" value="file:/$PROJECT_DIR$/../../minecraft%20orgenal%20mod%20with%20GPT/polluted_world/.gradle/loom-cache/minecraftMaven/" />
     </remote-repository>
+    <remote-repository>
+      <option name="id" value="maven2" />
+      <option name="name" value="maven2" />
+      <option name="url" value="https://maven.terraformersmc.com/" />
+    </remote-repository>
   </component>
 </project>

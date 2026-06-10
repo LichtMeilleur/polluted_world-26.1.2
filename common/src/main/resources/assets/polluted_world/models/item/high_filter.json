@@ -1,6 +1,6 @@
 {
   "parent": "minecraft:item/generated",
   "textures": {
-    "layer0": "polluted_world:item/high_filter",
+    "layer0": "polluted_world:item/high_filter"
   }
 }

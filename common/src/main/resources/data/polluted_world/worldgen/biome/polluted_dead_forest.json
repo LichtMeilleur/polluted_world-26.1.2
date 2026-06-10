@@ -1,0 +1,33 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.7,
+  "downfall": 0.2,
+  "effects": {
+    "fog_color": 5592405,
+    "water_color": 2960685,
+    "water_fog_color": 2960685,
+    "sky_color": 6316128,
+    "grass_color": 5592405,
+    "foliage_color": 5592405
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:patch_dead_bush",
+      "polluted_world:dry_grass_patch_placed",
+      "polluted_world:dead_tree_placed"
+    ],
+    []
+  ]
+}

@@ -33,11 +33,13 @@ public class PollutedWorldNeoForge {
             PollutionLogic.tickPlayer(player);
         }
     }
-    @SubscribeEvent
+    /*@SubscribeEvent
     public static void onChunkLoad(ChunkEvent.Load event) {
         if (!(event.getLevel() instanceof ServerLevel serverLevel)) return;
         if (!(event.getChunk() instanceof LevelChunk chunk)) return;
 
         SurfacePollutionTransformer.transformChunk(serverLevel, chunk);
     }
+
+     */
 }
