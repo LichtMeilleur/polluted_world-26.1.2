@@ -1,0 +1,7 @@
+{
+  "replace": false,
+  "values": [
+    "polluted_world:polluted_dead_forest",
+    "polluted_world:polluted_snowfield"
+  ]
+}

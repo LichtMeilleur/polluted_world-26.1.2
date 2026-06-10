@@ -1,0 +1,158 @@
+---- Minecraft Crash Report ----
+// Surprise! Haha. Well, this is awkward.
+
+Time: 2026-06-10 01:25:27
+Description: Registry Loading
+
+java.lang.IllegalStateException: Failed to load registries due to errors
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.createReportWithBriefInfo(RegistryDataLoader.java:292) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.logErrors(RegistryDataLoader.java:271) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.lambda$load$2(RegistryDataLoader.java:231) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at java.base/java.util.concurrent.CompletableFuture$UniApply.tryFire(CompletableFuture.java:667) ~[?:?] {}
+	at java.base/java.util.concurrent.CompletableFuture$Completion.exec(CompletableFuture.java:504) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187) ~[?:?] {}
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- Head --
+Thread: Render thread
+Stacktrace:
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.createReportWithBriefInfo(RegistryDataLoader.java:292) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+-- Loading info --
+Details:
+	Errors: 
+		minecraft:root/minecraft:worldgen/configured_feature: Unbound values in registry ResourceKey[minecraft:root / minecraft:worldgen/configured_feature]: [polluted_world:dead_bush_patch, polluted_world:dead_tree_column]
+		minecraft:worldgen/configured_feature/polluted_world:dead_bush_patch: Failed to parse polluted_world:dead_bush_patch from pack mod/polluted_world
+		minecraft:worldgen/configured_feature/polluted_world:dead_tree_column: Failed to parse polluted_world:dead_tree_column from pack mod/polluted_world
+Stacktrace:
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.createReportWithBriefInfo(RegistryDataLoader.java:292) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.logErrors(RegistryDataLoader.java:271) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.resources.RegistryDataLoader.lambda$load$2(RegistryDataLoader.java:231) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at java.base/java.util.concurrent.CompletableFuture$UniApply.tryFire(CompletableFuture.java:667) ~[?:?] {}
+	at java.base/java.util.concurrent.CompletableFuture$Completion.exec(CompletableFuture.java:504) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinTask.doExec(ForkJoinTask.java:511) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool$WorkQueue.topLevelExec(ForkJoinPool.java:1450) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinPool.runWorker(ForkJoinPool.java:2019) ~[?:?] {}
+	at java.base/java.util.concurrent.ForkJoinWorkerThread.run(ForkJoinWorkerThread.java:187) ~[?:?] {}
+
+
+-- Screen render details --
+Details:
+	Screen name: net.minecraft.client.gui.screens.GenericMessageScreen
+	Mouse location: Scaled: (174.000000, 151.500000). Absolute: (348.000000, 303.000000)
+	Screen size: Scaled: (427, 240). Absolute: (854, 480). Scale factor of 2
+Stacktrace:
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.renderer.GameRenderer.extractGui(GameRenderer.java:518) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.renderer.GameRenderer.extract(GameRenderer.java:424) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.Minecraft.renderFrame(Minecraft.java:1377) [minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.Minecraft.runTick(Minecraft.java:1329) [minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.Minecraft.run(Minecraft.java:937) [minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.main.Main.main(Main.java:246) [minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at net.neoforged.fml.startup.Client.main(Client.java:19) [loader-11.0.13.jar:11.0] {}
+	at java.base/jdk.internal.reflect.DirectMethodHandleAccessor.invoke(DirectMethodHandleAccessor.java:104) ~[?:?] {}
+	at java.base/java.lang.reflect.Method.invoke(Method.java:565) ~[?:?] {}
+	at net.neoforged.devlaunch.Main.main(Main.java:57) [DevLaunch-1.0.2.jar:?] {}
+
+
+-- Uptime --
+Details:
+	JVM uptime: 12.861s
+	Wall uptime: 7.950s
+	High-res time: 11.868s
+	Client ticks: 142 ticks / 7.100s
+
+-- Last reload --
+Details:
+	Reload number: 1
+	Reload reason: initial
+	Finished: Yes
+	Packs: vanilla, mod_resources, mod/polluted_world, mod/neoforge
+
+-- System Details --
+Details:
+	Minecraft Version: 26.1.2
+	Minecraft Version ID: 26.1.2
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 25.0.3, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode, sharing), Oracle Corporation
+	Memory: 422520200 bytes (402 MiB) / 822083584 bytes (784 MiB) up to 17129537536 bytes (16336 MiB)
+	Memory (heap): init: 1024MiB, used: 380MiB, committed: 784MiB, max: 16336MiB
+	Memory (non-head): init: 007MiB, used: 175MiB, committed: 178MiB, max: 000MiB
+	CPUs: 28
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Core(TM) i7-14700K
+	Identifier: Intel64 Family 6 Model 183 Stepping 1
+	Microarchitecture: Raptor Lake
+	Frequency (GHz): 3.42
+	Number of physical packages: 1
+	Number of physical CPUs: 20
+	Number of logical CPUs: 28
+	Graphics card #0 name: Intel(R) UHD Graphics 770
+	Graphics card #0 vendor: Intel Corporation
+	Graphics card #0 VRAM (MiB): 2048.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.101.7082
+	Graphics card #1 name: NVIDIA GeForce GTX 1650
+	Graphics card #1 vendor: NVIDIA
+	Graphics card #1 VRAM (MiB): 4096.00
+	Graphics card #1 deviceId: VideoController2
+	Graphics card #1 versionInfo: 32.0.15.9649
+	Memory slot #0 capacity (MiB): 32768.00
+	Memory slot #0 clockSpeed (GHz): 5.60
+	Memory slot #0 type: DDR5
+	Memory slot #1 capacity (MiB): 32768.00
+	Memory slot #1 clockSpeed (GHz): 5.60
+	Memory slot #1 type: DDR5
+	Virtual memory max (MiB): 69408.09
+	Virtual memory used (MiB): 40270.65
+	Swap memory total (MiB): 4096.00
+	Swap memory used (MiB): 80.98
+	Space in storage for jna.tmpdir (MiB): <path not set>
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): <path not set>
+	Space in storage for io.netty.native.workdir (MiB): <path not set>
+	Space in storage for java.io.tmpdir (MiB): available: 475118.06, total: 952352.00
+	Space in storage for workdir (MiB): available: 954438.75, total: 3813873.00
+	JVM Flags: 0 total; 
+	Debug Flags: 0 total; 
+	Launched Version: 26.1.2.43-beta
+	Backend library: LWJGL version 3.4.1+2
+	Backend API: NVIDIA GeForce GTX 1650/PCIe/SSE2 GL version 3.3.0 NVIDIA 596.49, NVIDIA Corporation
+	Window size: 854x480
+	GFLW Platform: win32
+	Render Extensions: GL_ARB_buffer_storage, GL_KHR_debug, GL_ARB_vertex_attrib_binding, GL_ARB_direct_state_access, GL_EXT_texture_filter_anisotropic
+	GL debug messages: 
+	Is Modded: Definitely; Client brand changed to 'neoforge'
+	Universe: 400921fb54442d18
+	Type: Client
+	Transparency: regular
+	Render Distance: 16/16 chunks
+	Resource Packs: vanilla, mod_resources, mod/polluted_world, mod/neoforge (incompatible)
+	Sound Cache: 48816 bytes in 1 buffers
+	Current Language: ja_jp
+	Locale: ja_JP
+	System encoding: MS932
+	File encoding: UTF-8
+	CPU: 28x Intel(R) Core(TM) i7-14700K
+	Class Processors: 
+		00.00%: neoforge:neoforge_dev_dist_cleaner
+		00.00%: neoforge:computing_frames (marker)
+		00.00%: neoforge:runtime_enum_extender
+		04.87%: neoforge:access_transformer
+		00.05%: neoforge:mixin
+		00.00%: neoforge:simple_processors_default (marker)
+		00.01%: neoforge.coremods:field_to_getter.net.minecraft.world.level.biome.biome
+		00.01%: neoforge.coremods:field_to_getter.net.minecraft.world.level.block.flowerpotblock
+		00.01%: neoforge.coremods:field_to_getter.net.minecraft.world.level.levelgen.structure.structure
+		00.26%: neoforge.coremods:method_redirector
+	Mod List: 
+		minecraft-patched-26.1.2.43-beta.jar              |Minecraft                     |minecraft                     |26.1.2              |Manifest: NOSIGNATURE
+		neoforge-26.1.2.43-beta-universal.jar             |NeoForge                      |neoforge                      |26.1.2.43-beta      |Manifest: NOSIGNATURE
+		main                                              |polluted_world                |polluted_world                |1.4.3               |Manifest: NOSIGNATURE
+	Crash Report UUID: 4493ada4-6132-478d-8dc8-6d6de7045a54
+	FML: 11.0.13
+	NeoForge: 26.1.2.43-beta
