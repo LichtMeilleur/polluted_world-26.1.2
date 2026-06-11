@@ -10,3 +10,9 @@
 /gamemode survival
 /gamemode creative
 /gamemode survival
+/polluted_place entrance
+/polluted_place village
+/polluted_place entrance
+/polluted_place village
+/polluted_place entrance
+/polluted_place start

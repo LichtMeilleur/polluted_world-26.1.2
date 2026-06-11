@@ -1,9 +1,11 @@
 package com.licht_meilleur.polluted_world;
 
+import com.licht_meilleur.polluted_world.command.PollutedWorldCommands;
 import com.licht_meilleur.polluted_world.registry.ModItems;
 import com.licht_meilleur.polluted_world.registry.fabric.FabricItemGroups;
 import com.licht_meilleur.polluted_world.pollution.PollutionLogic;
 import com.licht_meilleur.polluted_world.worldgen.ModFeatures;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
@@ -30,6 +32,10 @@ public class PollutedWorldFabric implements ModInitializer {
 
          */
         //Regions.register(new PollutedRegion());
+
+        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
+            PollutedWorldCommands.register(dispatcher);
+        });
 
         ModFeatures.register();
 

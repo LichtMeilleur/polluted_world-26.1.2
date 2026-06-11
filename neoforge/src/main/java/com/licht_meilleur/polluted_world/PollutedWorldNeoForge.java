@@ -1,5 +1,6 @@
 package com.licht_meilleur.polluted_world;
 
+import com.licht_meilleur.polluted_world.command.PollutedWorldCommands;
 import com.licht_meilleur.polluted_world.pollution.PollutionLogic;
 import com.licht_meilleur.polluted_world.registry.neoforge.NeoForgeItemGroups;
 import com.licht_meilleur.polluted_world.registry.neoforge.NeoForgeItems;
@@ -8,6 +9,7 @@ import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
 import net.neoforged.neoforge.event.tick.ServerTickEvent;
 
 import com.licht_meilleur.polluted_world.pollution.SurfacePollutionTransformer;
@@ -42,4 +44,9 @@ public class PollutedWorldNeoForge {
     }
 
      */
+
+    @SubscribeEvent
+    public static void onRegisterCommands(RegisterCommandsEvent event) {
+        PollutedWorldCommands.register(event.getDispatcher());
+    }
 }
