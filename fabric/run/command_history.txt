@@ -16,3 +16,7 @@
 /polluted_place village
 /polluted_place entrance
 /polluted_place start
+/polluted_place network
+/polluted_place two_station
+/polluted_place two_station_underground
+/polluted_place two_station_surface

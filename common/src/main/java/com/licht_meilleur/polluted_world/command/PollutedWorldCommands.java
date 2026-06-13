@@ -24,6 +24,19 @@ public class PollutedWorldCommands {
 
                         .then(Commands.literal("start")
                                 .executes(ctx -> placeStart(ctx.getSource())))
+
+                        .then(Commands.literal("two_station")
+                                .executes(ctx -> placeTwoStation(ctx.getSource())))
+
+                        .then(Commands.literal("two_station_surface")
+                                .executes(ctx -> placeTwoStationSurface(ctx.getSource())))
+
+
+
+
+
+
+
         );
     }
 
@@ -80,13 +93,79 @@ public class PollutedWorldCommands {
                                     + " / village jigsaw: " + result.villageJigsaws()
                                     + " / barrier: " + result.barrierMarkers()
                                     + " / teleported: " + result.teleported()
+
                     ),
                     true
             );
 
+
+
             return result.villageJigsaws();
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed to place start station: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+
+    private static int placeTwoStation(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(Component.literal("This command must be used by a player."));
+            return 0;
+        }
+
+        try {
+            PollutedStructurePlacer.NetworkResult result =
+                    PollutedStructurePlacer.placeTwoStationNetwork(player.level(), player, player.blockPosition());
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "Placed two station network"
+                                    + " / rails: " + result.railCount()
+                                    + " / barrier: " + result.barrierMarkers()
+                                    + " / teleported: " + result.teleported()
+                    ),
+                    true
+            );
+
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed two station network: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int placeTwoStationSurface(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(Component.literal("This command must be used by a player."));
+            return 0;
+        }
+
+        try {
+            PollutedStructurePlacer.NetworkResult result =
+                    PollutedStructurePlacer.placeTwoStationNetworkOnSurface(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "Placed surface anchored station"
+                                    + " / rails: " + result.railCount()
+                                    + " / barrier: " + result.barrierMarkers()
+                                    + " / teleported: " + result.teleported()
+                    ),
+                    true
+            );
+
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed surface station: " + e.getMessage()));
             return 0;
         }
     }

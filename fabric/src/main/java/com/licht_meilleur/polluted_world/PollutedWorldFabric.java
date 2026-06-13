@@ -4,6 +4,7 @@ import com.licht_meilleur.polluted_world.command.PollutedWorldCommands;
 import com.licht_meilleur.polluted_world.registry.ModItems;
 import com.licht_meilleur.polluted_world.registry.fabric.FabricItemGroups;
 import com.licht_meilleur.polluted_world.pollution.PollutionLogic;
+import com.licht_meilleur.polluted_world.world.PollutedStartManager;
 import com.licht_meilleur.polluted_world.worldgen.ModFeatures;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
@@ -50,6 +51,8 @@ public class PollutedWorldFabric implements ModInitializer {
         PollutedWorldMod.init();
 
         ServerTickEvents.END_SERVER_TICK.register(server -> {
+            PollutedStartManager.tick(server);
+
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 PollutionLogic.tickPlayer(player);
             }

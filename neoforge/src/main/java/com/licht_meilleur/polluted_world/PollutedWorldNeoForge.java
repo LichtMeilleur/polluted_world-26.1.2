@@ -4,6 +4,7 @@ import com.licht_meilleur.polluted_world.command.PollutedWorldCommands;
 import com.licht_meilleur.polluted_world.pollution.PollutionLogic;
 import com.licht_meilleur.polluted_world.registry.neoforge.NeoForgeItemGroups;
 import com.licht_meilleur.polluted_world.registry.neoforge.NeoForgeItems;
+import com.licht_meilleur.polluted_world.world.PollutedStartManager;
 import net.minecraft.server.level.ServerPlayer;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -31,6 +32,8 @@ public class PollutedWorldNeoForge {
 
     @SubscribeEvent
     public static void onServerTick(ServerTickEvent.Post event) {
+        PollutedStartManager.tick(event.getServer());
+
         for (ServerPlayer player : event.getServer().getPlayerList().getPlayers()) {
             PollutionLogic.tickPlayer(player);
         }
