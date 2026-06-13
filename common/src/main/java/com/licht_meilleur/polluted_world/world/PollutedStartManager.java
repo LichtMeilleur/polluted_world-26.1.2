@@ -9,28 +9,24 @@ import java.util.UUID;
 
 public class PollutedStartManager {
 
-    private static final Set<UUID> GENERATED_PLAYERS = new HashSet<>();
+    private static final Set<UUID> TRIED_PLAYERS = new HashSet<>();
 
     public static void tick(MinecraftServer server) {
-
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
-
-            if (GENERATED_PLAYERS.contains(player.getUUID())) {
+            if (TRIED_PLAYERS.contains(player.getUUID())) {
                 continue;
             }
 
-            try {
+            TRIED_PLAYERS.add(player.getUUID());
 
+            try {
                 PollutedStructurePlacer.placeTwoStationNetworkOnSurface(
                         player.level(),
                         player,
                         player.blockPosition()
                 );
-
-                GENERATED_PLAYERS.add(player.getUUID());
-
             } catch (Exception e) {
-                System.out.println("[PollutedWorld] Failed: " + e.getMessage());
+                System.out.println("[PollutedWorld] Start generation skipped: " + e.getMessage());
             }
         }
     }

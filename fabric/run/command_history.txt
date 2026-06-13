@@ -20,3 +20,4 @@
 /polluted_place two_station
 /polluted_place two_station_underground
 /polluted_place two_station_surface
+/polluted_place two_station
