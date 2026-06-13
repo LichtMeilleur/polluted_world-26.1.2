@@ -1,0 +1,31 @@
+{
+  "stats": {
+    "minecraft:picked_up": {
+      "minecraft:poisonous_potato": 1,
+      "minecraft:carrot": 34,
+      "minecraft:stick": 2,
+      "minecraft:potato": 1,
+      "minecraft:lever": 1,
+      "minecraft:wheat_seeds": 48,
+      "minecraft:wheat": 15
+    },
+    "minecraft:used": {
+      "minecraft:soul_torch": 19
+    },
+    "minecraft:custom": {
+      "minecraft:sprint_one_cm": 3457,
+      "minecraft:time_since_rest": 7733,
+      "minecraft:walk_one_cm": 49439,
+      "minecraft:total_world_time": 7756,
+      "minecraft:leave_game": 1,
+      "minecraft:fly_one_cm": 101385,
+      "minecraft:walk_on_water_one_cm": 1698,
+      "minecraft:crouch_one_cm": 108,
+      "minecraft:sneak_time": 59,
+      "minecraft:play_time": 7733,
+      "minecraft:jump": 27,
+      "minecraft:time_since_death": 7733
+    }
+  },
+  "DataVersion": 4790
+}
