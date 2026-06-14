@@ -2,6 +2,7 @@ package com.licht_meilleur.polluted_world.world;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -348,10 +349,12 @@ public class PollutedStructurePlacer {
         }
 
 
-        CodeRailTunnelBuilder.generateTunnel(
+        CodeRailTunnelBuilder.generateTunnelFromOuts(
                 level,
                 eastStartNext.below(),
-                eastEndNext.below()
+                Direction.NORTH,
+                eastEndNext.below(),
+                Direction.SOUTH
         );
 
         return new ConnectResult(nextVillage, railCount);
