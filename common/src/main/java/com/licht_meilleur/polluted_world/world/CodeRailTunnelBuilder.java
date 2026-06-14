@@ -14,64 +14,93 @@ import java.util.List;
 
 public class CodeRailTunnelBuilder {
 
-    public static void generateTunnel(ServerLevel level, BlockPos start, BlockPos end) {
-        List<RailStep> path = new ArrayList<>();
+    private static final int HALF_WIDTH = 4;
+    private static final int AIR_HEIGHT = 5;
 
-        BlockPos current = start;
+    public static void generateTunnel(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
+        List<BlockPos> path = new ArrayList<>();
 
-        current = collectLineX(path, current, end.getX());
-        collectLineZ(path, current, end.getZ());
+        BlockPos current = startRailPos;
 
-        path.add(new RailStep(end, false));
-
-        for (RailStep step : path) {
-            carveRailSpace(level, step.pos());
-        }
-
-        for (int i = 0; i < path.size(); i++) {
-            RailStep step = path.get(i);
-            prepareRailFloor(level, step.pos());
-            placeRail(level, step.pos(), i, step.eastWest());
-        }
-    }
-
-    private static BlockPos collectLineX(List<RailStep> path, BlockPos start, int targetX) {
-        int step = Integer.compare(targetX, start.getX());
-        BlockPos current = start;
-
-        while (current.getX() != targetX) {
-            path.add(new RailStep(current, true));
+        while (current.getX() != endRailPos.getX()) {
+            path.add(current);
+            int step = Integer.compare(endRailPos.getX(), current.getX());
             current = current.offset(step, 0, 0);
         }
 
-        return current;
-    }
-
-    private static BlockPos collectLineZ(List<RailStep> path, BlockPos start, int targetZ) {
-        int step = Integer.compare(targetZ, start.getZ());
-        BlockPos current = start;
-
-        while (current.getZ() != targetZ) {
-            path.add(new RailStep(current, false));
+        while (current.getZ() != endRailPos.getZ()) {
+            path.add(current);
+            int step = Integer.compare(endRailPos.getZ(), current.getZ());
             current = current.offset(0, 0, step);
         }
 
-        return current;
-    }
+        path.add(endRailPos);
 
-    private static void carveRailSpace(ServerLevel level, BlockPos railPos) {
-        for (int dx = -1; dx <= 1; dx++) {
-            for (int dy = 0; dy <= 3; dy++) {
-                for (int dz = -1; dz <= 1; dz++) {
-                    BlockPos pos = railPos.offset(dx, dy, dz);
-                    level.setBlock(pos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
-                }
-            }
+        for (BlockPos pos : path) {
+            carveTunnelCell(level, pos);
+        }
+
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos pos = path.get(i);
+
+            boolean eastWest = i + 1 < path.size()
+                    ? path.get(i + 1).getX() != pos.getX()
+                    : i > 0 && path.get(i - 1).getX() != pos.getX();
+
+            placeRail(level, pos, i, eastWest);
         }
     }
 
-    private static void prepareRailFloor(ServerLevel level, BlockPos railPos) {
-        level.setBlock(railPos.below(), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_ALL);
+    private static BlockPos digLineX(ServerLevel level, BlockPos start, int targetX) {
+        int step = Integer.compare(targetX, start.getX());
+        BlockPos current = start;
+        int index = 0;
+
+        while (current.getX() != targetX) {
+            carveTunnelCell(level, current);
+            placeRail(level, current, index, true);
+
+            current = current.offset(step, 0, 0);
+            index++;
+        }
+
+        return current;
+    }
+
+    private static BlockPos digLineZ(ServerLevel level, BlockPos start, int targetZ) {
+        int step = Integer.compare(targetZ, start.getZ());
+        BlockPos current = start;
+        int index = 0;
+
+        while (current.getZ() != targetZ) {
+            carveTunnelCell(level, current);
+            placeRail(level, current, index, false);
+
+            current = current.offset(0, 0, step);
+            index++;
+        }
+
+        return current;
+    }
+
+    private static void carveTunnelCell(ServerLevel level, BlockPos railPos) {
+        // 床
+        for (int dx = -HALF_WIDTH; dx <= HALF_WIDTH; dx++) {
+            for (int dz = -HALF_WIDTH; dz <= HALF_WIDTH; dz++) {
+                BlockPos floorPos = railPos.offset(dx, -1, dz);
+                level.setBlock(floorPos, Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+
+        // 空洞
+        for (int dx = -HALF_WIDTH; dx <= HALF_WIDTH; dx++) {
+            for (int dy = 0; dy <= AIR_HEIGHT; dy++) {
+                for (int dz = -HALF_WIDTH; dz <= HALF_WIDTH; dz++) {
+                    BlockPos airPos = railPos.offset(dx, dy, dz);
+                    level.setBlock(airPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                }
+            }
+        }
     }
 
     private static void placeRail(ServerLevel level, BlockPos pos, int index, boolean eastWest) {
@@ -93,6 +122,15 @@ public class CodeRailTunnelBuilder {
         }
     }
 
-    private record RailStep(BlockPos pos, boolean eastWest) {
+    public static void placeConnectorRail(ServerLevel level, BlockPos a, BlockPos b) {
+        boolean eastWest = a.getZ() == b.getZ();
+
+        RailShape shape = eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+
+        BlockState rail = Blocks.RAIL.defaultBlockState()
+                .setValue(RailBlock.SHAPE, shape);
+
+        level.setBlock(a, rail, Block.UPDATE_ALL);
+        level.setBlock(b, rail, Block.UPDATE_ALL);
     }
 }

@@ -46,6 +46,30 @@ public class PollutedStructurePlacer {
 
     private static final List<String> ENTRANCE_DECK = new ArrayList<>();
     private static final List<String> VILLAGE_DECK = new ArrayList<>();
+    private static final List<SideDungeonPiece> SIDE_DUNGEON_DECK = new ArrayList<>();
+
+    private static void resetSideDungeonDeck() {
+        SIDE_DUNGEON_DECK.clear();
+
+        SIDE_DUNGEON_DECK.add(new SideDungeonPiece(
+                "west_side_dungeon_01",
+                "polluted_world:west_side_street"
+        ));
+
+        SIDE_DUNGEON_DECK.add(new SideDungeonPiece(
+                "east_side_dungeon_01",
+                "polluted_world:east_side_street"
+        ));
+    }
+
+    private static SideDungeonPiece drawSideDungeon(ServerLevel level) {
+        int index = level.getRandom().nextInt(SIDE_DUNGEON_DECK.size());
+        return SIDE_DUNGEON_DECK.remove(index);
+    }
+
+    private static void returnSideDungeon(SideDungeonPiece piece) {
+        SIDE_DUNGEON_DECK.add(piece);
+    }
 
 
 
@@ -94,6 +118,8 @@ public class PollutedStructurePlacer {
 
     public static NetworkResult placeTwoStationNetwork(ServerLevel level, ServerPlayer player, BlockPos origin) {
         resetStationDecksForNetwork();
+
+        resetSideDungeonDeck();
 
         StructureTemplate railGateTemplate = load(level, "rail_gate");
         StructureTemplate normalRailTemplate = load(level, "normal_rail");
@@ -321,10 +347,11 @@ public class PollutedStructurePlacer {
             eastEndNext = eastFromEnd.marker("polluted_world:rail_out");
         }
 
+
         CodeRailTunnelBuilder.generateTunnel(
                 level,
-                eastStartNext,
-                eastEndNext
+                eastStartNext.below(),
+                eastEndNext.below()
         );
 
         return new ConnectResult(nextVillage, railCount);
@@ -378,19 +405,19 @@ public class PollutedStructurePlacer {
     private static List<RailPiece> createRailPool(ServerLevel level, StructureTemplate normalRailTemplate) {
         List<RailPiece> pool = new ArrayList<>();
 
-        // 基本レール。必ず入れる。
-        pool.add(new RailPiece("normal_rail", normalRailTemplate));
-        pool.add(new RailPiece("normal_rail", normalRailTemplate));
         pool.add(new RailPiece("normal_rail", normalRailTemplate));
         pool.add(new RailPiece("normal_rail", normalRailTemplate));
 
-        // 今後NBTを追加したらここに増やす。
+        // テスト中はサイドレール多め
         addOptionalRail(level, pool, "rail_with_side_street");
-        addOptionalRail(level, pool, "collapse_rail");
-        addOptionalRail(level, pool, "rail_collapsed");
-        addOptionalRail(level, pool, "rail_flooded");
-        addOptionalRail(level, pool, "rail_maintenance");
-        addOptionalRail(level, pool, "rail_abandoned");
+        addOptionalRail(level, pool, "rail_with_side_street");
+        addOptionalRail(level, pool, "rail_with_side_street");
+        addOptionalRail(level, pool, "rail_with_side_street");
+        addOptionalRail(level, pool, "rail_with_side_street");
+        addOptionalRail(level, pool, "rail_with_side_street");
+
+        // collapse_rail は一旦OFF推奨
+        // addOptionalRail(level, pool, "collapse_rail");
 
         return pool;
     }
@@ -513,12 +540,29 @@ public class PollutedStructurePlacer {
                 continue;
             }
 
+            // サイドダンジョンはレールに接続するので、
+            // レール・ゲートとの衝突は無視する
+            if (isRailLikeStructure(node.structureName())) {
+                continue;
+            }
+
             if (node.intersects(candidateOrigin, candidateTemplate.getSize(), 0)) {
                 return true;
             }
         }
 
         return false;
+    }
+
+    private static boolean isRailLikeStructure(String name) {
+        return name.equals("rail_gate")
+                || name.equals("normal_rail")
+                || name.equals("rail_with_side_street")
+                || name.equals("collapse_rail")
+                || name.equals("rail_collapsed")
+                || name.equals("rail_flooded")
+                || name.equals("rail_maintenance")
+                || name.equals("rail_abandoned");
     }
 
     private static StructureNode placeConnectedAbsoluteOffset(
@@ -701,33 +745,101 @@ public class PollutedStructurePlacer {
     private record ConnectResult(StructureNode nextVillage, int railCount) {
     }
 
+    private record SideDungeonPiece(
+            String structureName,
+            String markerName
+    ) {
+    }
+
     private static void tryPlaceSideDungeon(
             ServerLevel level,
             List<StructureNode> nodes,
             StructureNode railNode
     ) {
-        boolean hasWest = railNode.hasMarker("polluted_world:west_side_street");
-        boolean hasEast = railNode.hasMarker("polluted_world:east_side_street");
-
-        if (!hasWest && !hasEast) {
+        if (!railNode.hasMarker("polluted_world:west_side_street")
+                && !railNode.hasMarker("polluted_world:east_side_street")) {
             return;
         }
 
-        boolean eastFirst = level.getRandom().nextBoolean();
-
-        if (eastFirst) {
-            if (tryPlaceEastSideDungeon(level, nodes, railNode)) {
-                return;
-            }
-
-            tryPlaceWestSideDungeon(level, nodes, railNode);
-        } else {
-            if (tryPlaceWestSideDungeon(level, nodes, railNode)) {
-                return;
-            }
-
-            tryPlaceEastSideDungeon(level, nodes, railNode);
+        if (SIDE_DUNGEON_DECK.isEmpty()) {
+            resetSideDungeonDeck();
         }
+
+        int attempts = SIDE_DUNGEON_DECK.size();
+
+        for (int i = 0; i < attempts; i++) {
+            SideDungeonPiece piece = drawSideDungeon(level);
+
+            boolean placed = tryPlaceSideDungeonPiece(
+                    level,
+                    nodes,
+                    railNode,
+                    piece
+            );
+
+            if (placed) {
+                System.out.println("[PollutedWorld] Placed side dungeon: " + piece.structureName());
+                return;
+            }
+
+            returnSideDungeon(piece);
+        }
+    }
+
+    private static boolean tryPlaceSideDungeonPiece(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            StructureNode railNode,
+            SideDungeonPiece piece
+    ) {
+        if (!railNode.hasMarker(piece.markerName())) {
+            System.out.println("[PollutedWorld] Side skipped no marker: " + piece.structureName());
+            return false;
+        }
+
+        StructureTemplate template = load(level, piece.structureName());
+
+        Rotation[] rotations = new Rotation[] {
+                railNode.rotation(),
+                RotationUtil.add(railNode.rotation(), Rotation.CLOCKWISE_180)
+        };
+
+        for (Rotation rotation : rotations) {
+            BlockPos origin = getConnectedAbsoluteOrigin(
+                    template,
+                    piece.markerName(),
+                    railNode.marker(piece.markerName()),
+                    rotation
+            );
+
+            boolean collides = collidesWithPlacedStructures(origin, template, nodes, railNode);
+
+            System.out.println(
+                    "[PollutedWorld] Try side dungeon="
+                            + piece.structureName()
+                            + " marker=" + piece.markerName()
+                            + " origin=" + origin
+                            + " rotation=" + rotation
+                            + " collides=" + collides
+            );
+
+            if (collides) {
+                continue;
+            }
+
+            StructureNode dungeon = placeAt(
+                    level,
+                    piece.structureName(),
+                    template,
+                    origin,
+                    rotation
+            );
+
+            nodes.add(dungeon);
+            return true;
+        }
+
+        return false;
     }
 
     private static boolean tryPlaceWestSideDungeon(
@@ -771,6 +883,15 @@ public class PollutedStructurePlacer {
             List<StructureNode> nodes,
             StructureNode railNode
     ) {
+
+        System.out.println(
+                "[PollutedWorld] Side check rail="
+                        + railNode.structureName()
+                        + " rotation=" + railNode.rotation()
+                        + " hasWest=" + railNode.hasMarker("polluted_world:west_side_street")
+                        + " hasEast=" + railNode.hasMarker("polluted_world:east_side_street")
+        );
+
         if (!railNode.hasMarker("polluted_world:east_side_street")) {
             return false;
         }
@@ -785,6 +906,32 @@ public class PollutedStructurePlacer {
                 railNode.marker("polluted_world:east_side_street"),
                 rotation
         );
+
+
+        boolean collides = collidesWithPlacedStructures(origin, template, nodes, railNode);
+
+        System.out.println(
+                "[PollutedWorld] Try west dungeon origin="
+                        + origin
+                        + " rotation=" + rotation
+                        + " collides=" + collides
+        );
+
+        if (collides) {
+            return false;
+        }
+
+
+        System.out.println(
+                "[PollutedWorld] Try east dungeon origin="
+                        + origin
+                        + " rotation=" + rotation
+                        + " collides=" + collides
+        );
+
+        if (collides) {
+            return false;
+        }
 
         if (collidesWithPlacedStructures(origin, template, nodes, railNode)) {
             return false;
