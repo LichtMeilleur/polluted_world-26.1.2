@@ -25,17 +25,24 @@ public class PollutedWorldCommands {
                         .then(Commands.literal("start")
                                 .executes(ctx -> placeStart(ctx.getSource())))
 
+                        // 旧方式：保険として残す
                         .then(Commands.literal("two_station")
                                 .executes(ctx -> placeTwoStation(ctx.getSource())))
 
-                        .then(Commands.literal("two_station_surface")
-                                .executes(ctx -> placeTwoStationSurface(ctx.getSource())))
+                        // 新方式の最小テスト：サイドレール + サイドダンジョン干渉確認
+                        .then(Commands.literal("side_layout")
+                                .executes(ctx -> placeSideLayout(ctx.getSource())))
+
+                        .then(Commands.literal("station_dungeon_station")
+                                .executes(ctx -> placeStationDungeonStation(ctx.getSource())))
 
 
+                        .then(Commands.literal("station_unit")
+                                .executes(ctx -> placeStationUnit(ctx.getSource())))
 
 
-
-
+                        .then(Commands.literal("unit_chain")
+                                .executes(ctx -> placeUnitChain(ctx.getSource())))
 
         );
     }
@@ -79,12 +86,13 @@ public class PollutedWorldCommands {
             return 0;
         }
 
-        ServerLevel level = player.level();
-        BlockPos origin = player.blockPosition();
-
         try {
             PollutedStructurePlacer.StartResult result =
-                    PollutedStructurePlacer.placeEntranceAndVillage(level, player, origin);
+                    PollutedStructurePlacer.placeEntranceAndVillage(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
 
             source.sendSuccess(
                     () -> Component.literal(
@@ -93,12 +101,9 @@ public class PollutedWorldCommands {
                                     + " / village jigsaw: " + result.villageJigsaws()
                                     + " / barrier: " + result.barrierMarkers()
                                     + " / teleported: " + result.teleported()
-
                     ),
                     true
             );
-
-
 
             return result.villageJigsaws();
         } catch (Exception e) {
@@ -106,7 +111,6 @@ public class PollutedWorldCommands {
             return 0;
         }
     }
-
 
     private static int placeTwoStation(CommandSourceStack source) {
         ServerPlayer player = source.getPlayer();
@@ -118,11 +122,15 @@ public class PollutedWorldCommands {
 
         try {
             PollutedStructurePlacer.NetworkResult result =
-                    PollutedStructurePlacer.placeTwoStationNetwork(player.level(), player, player.blockPosition());
+                    PollutedStructurePlacer.placeTwoStationNetwork(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
 
             source.sendSuccess(
                     () -> Component.literal(
-                            "Placed two station network"
+                            "Placed old two station network"
                                     + " / rails: " + result.railCount()
                                     + " / barrier: " + result.barrierMarkers()
                                     + " / teleported: " + result.teleported()
@@ -132,12 +140,12 @@ public class PollutedWorldCommands {
 
             return 1;
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed two station network: " + e.getMessage()));
+            source.sendFailure(Component.literal("Failed old two station network: " + e.getMessage()));
             return 0;
         }
     }
 
-    private static int placeTwoStationSurface(CommandSourceStack source) {
+    private static int placeSideLayout(CommandSourceStack source) {
         ServerPlayer player = source.getPlayer();
 
         if (player == null) {
@@ -147,7 +155,7 @@ public class PollutedWorldCommands {
 
         try {
             PollutedStructurePlacer.NetworkResult result =
-                    PollutedStructurePlacer.placeTwoStationNetworkOnSurface(
+                    PollutedStructurePlacer.placeSideDungeonLayoutTest(
                             player.level(),
                             player,
                             player.blockPosition()
@@ -155,8 +163,8 @@ public class PollutedWorldCommands {
 
             source.sendSuccess(
                     () -> Component.literal(
-                            "Placed surface anchored station"
-                                    + " / rails: " + result.railCount()
+                            "Placed side dungeon layout"
+                                    + " / parts: " + result.railCount()
                                     + " / barrier: " + result.barrierMarkers()
                                     + " / teleported: " + result.teleported()
                     ),
@@ -165,7 +173,106 @@ public class PollutedWorldCommands {
 
             return 1;
         } catch (Exception e) {
-            source.sendFailure(Component.literal("Failed surface station: " + e.getMessage()));
+            source.sendFailure(Component.literal("Failed side dungeon layout: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int placeStationDungeonStation(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(Component.literal("This command must be used by a player."));
+            return 0;
+        }
+
+        try {
+            PollutedStructurePlacer.NetworkResult result =
+                    PollutedStructurePlacer.placeStationDungeonStationLayout(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "Placed station-dungeon-station layout"
+                                    + " / parts: " + result.railCount()
+                                    + " / barrier: " + result.barrierMarkers()
+                                    + " / teleported: " + result.teleported()
+                    ),
+                    true
+            );
+
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed station-dungeon-station layout: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int placeStationUnit(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(Component.literal("This command must be used by a player."));
+            return 0;
+        }
+
+        try {
+            PollutedStructurePlacer.NetworkResult result =
+                    PollutedStructurePlacer.placeStationUnitTest(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "Placed station unit"
+                                    + " / parts: " + result.railCount()
+                                    + " / barrier: " + result.barrierMarkers()
+                                    + " / teleported: " + result.teleported()
+                    ),
+                    true
+            );
+
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed station unit: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int placeUnitChain(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(Component.literal("This command must be used by a player."));
+            return 0;
+        }
+
+        try {
+            PollutedStructurePlacer.NetworkResult result =
+                    PollutedStructurePlacer.placeUnitChainTest(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "Placed unit chain"
+                                    + " / parts: " + result.railCount()
+                                    + " / barrier: " + result.barrierMarkers()
+                                    + " / teleported: " + result.teleported()
+                    ),
+                    true
+            );
+
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed unit chain: " + e.getMessage()));
             return 0;
         }
     }

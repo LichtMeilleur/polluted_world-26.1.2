@@ -21,3 +21,12 @@
 /polluted_place two_station_underground
 /polluted_place two_station_surface
 /polluted_place two_station
+/polluted_place two_station_middle
+/polluted_place two_station_layout
+/polluted_place side_layout
+/polluted_place station_dungeon_station
+/polluted_place station_unit
+/polluted_place station_dungeon_station
+/polluted_place unit_chain
+/weather clear
+/polluted_place unit_chain

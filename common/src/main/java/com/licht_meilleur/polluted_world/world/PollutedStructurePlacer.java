@@ -2,7 +2,9 @@ package com.licht_meilleur.polluted_world.world;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
 import net.minecraft.core.BlockPos;
+
 import net.minecraft.core.Direction;
+import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -19,6 +21,8 @@ import java.util.Optional;
 
 public class PollutedStructurePlacer {
 
+    private static final int MIDDLE_SPACER_LENGTH = 20;
+
     public record PlaceResult(int jigsawMarkers, int barrierMarkers) {
     }
 
@@ -26,6 +30,35 @@ public class PollutedStructurePlacer {
     }
 
     public record NetworkResult(int railCount, int barrierMarkers, boolean teleported) {
+    }
+
+    private record PlacedUnit(
+            String name,
+            BlockPos origin,
+            Vec3i size,
+            int margin
+    ) {
+        boolean intersects(PlacedUnit other) {
+            int minX = origin.getX() - margin;
+            int minY = origin.getY() - margin;
+            int minZ = origin.getZ() - margin;
+
+            int maxX = origin.getX() + size.getX() + margin;
+            int maxY = origin.getY() + size.getY() + margin;
+            int maxZ = origin.getZ() + size.getZ() + margin;
+
+            int otherMinX = other.origin.getX() - other.margin;
+            int otherMinY = other.origin.getY() - other.margin;
+            int otherMinZ = other.origin.getZ() - other.margin;
+
+            int otherMaxX = other.origin.getX() + other.size.getX() + other.margin;
+            int otherMaxY = other.origin.getY() + other.size.getY() + other.margin;
+            int otherMaxZ = other.origin.getZ() + other.size.getZ() + other.margin;
+
+            return minX < otherMaxX && maxX > otherMinX
+                    && minY < otherMaxY && maxY > otherMinY
+                    && minZ < otherMaxZ && maxZ > otherMinZ;
+        }
     }
 
     private record StationPair(String entrance, String village) {
@@ -61,6 +94,24 @@ public class PollutedStructurePlacer {
                 "east_side_dungeon_01",
                 "polluted_world:east_side_street"
         ));
+    }
+
+    private static List<RailPiece> createRailPool(ServerLevel level, StructureTemplate normalRailTemplate) {
+        List<RailPiece> pool = new ArrayList<>();
+
+        pool.add(new RailPiece("normal_rail", normalRailTemplate));
+        pool.add(new RailPiece("normal_rail", normalRailTemplate));
+
+        return pool;
+    }
+
+    private static List<RailPiece> createEventRailPool(ServerLevel level) {
+        List<RailPiece> pool = new ArrayList<>();
+
+        addOptionalRail(level, pool, "rail_with_side_street");
+        addOptionalRail(level, pool, "collapse_rail");
+
+        return pool;
     }
 
     private static SideDungeonPiece drawSideDungeon(ServerLevel level) {
@@ -202,9 +253,10 @@ public class PollutedStructurePlacer {
 
         int railCount = 6 + level.getRandom().nextInt(5);
 
-        // =========================
-        // west_up -> west_down
-        // =========================
+
+// =========================
+// west_up -> west_down
+// =========================
         StructureNode westStartGate = placeConnectedAbsolute(
                 level,
                 "rail_gate",
@@ -271,9 +323,9 @@ public class PollutedStructurePlacer {
         );
         nodes.add(nextEntrance);
 
-        // =========================
-        // east_up -> east_down
-        // =========================
+// =========================
+// east_up -> east_down
+// =========================
         StructureNode eastStartGate = placeConnectedAbsolute(
                 level,
                 "rail_gate",
@@ -348,17 +400,22 @@ public class PollutedStructurePlacer {
             eastEndNext = eastFromEnd.marker("polluted_world:rail_out");
         }
 
-
-        CodeRailTunnelBuilder.generateTunnelFromOuts(
+        CodeRailTunnelBuilder.generateTunnel(
                 level,
                 eastStartNext.below(),
-                Direction.NORTH,
-                eastEndNext.below(),
-                Direction.SOUTH
+                eastEndNext.below()
         );
 
         return new ConnectResult(nextVillage, railCount);
     }
+
+
+
+
+
+
+
+
 
     private static StructureTemplate load(ServerLevel level, String structureName) {
         Identifier id = PollutedWorldMod.id(structureName);
@@ -405,25 +462,9 @@ public class PollutedStructurePlacer {
         return deck.remove(index);
     }
 
-    private static List<RailPiece> createRailPool(ServerLevel level, StructureTemplate normalRailTemplate) {
-        List<RailPiece> pool = new ArrayList<>();
 
-        pool.add(new RailPiece("normal_rail", normalRailTemplate));
-        pool.add(new RailPiece("normal_rail", normalRailTemplate));
 
-        // テスト中はサイドレール多め
-        addOptionalRail(level, pool, "rail_with_side_street");
-        addOptionalRail(level, pool, "rail_with_side_street");
-        addOptionalRail(level, pool, "rail_with_side_street");
-        addOptionalRail(level, pool, "rail_with_side_street");
-        addOptionalRail(level, pool, "rail_with_side_street");
-        addOptionalRail(level, pool, "rail_with_side_street");
 
-        // collapse_rail は一旦OFF推奨
-        // addOptionalRail(level, pool, "collapse_rail");
-
-        return pool;
-    }
 
     private static void addOptionalRail(ServerLevel level, List<RailPiece> pool, String structureName) {
         Identifier id = PollutedWorldMod.id(structureName);
@@ -568,26 +609,6 @@ public class PollutedStructurePlacer {
                 || name.equals("rail_abandoned");
     }
 
-    private static StructureNode placeConnectedAbsoluteOffset(
-            ServerLevel level,
-            String childName,
-            StructureTemplate childTemplate,
-            String childMarkerName,
-            BlockPos connectToWorldPos,
-            Rotation absoluteRotation,
-            BlockPos offset
-    ) {
-        StructureNode node = placeConnectedAbsolute(
-                level,
-                childName,
-                childTemplate,
-                childMarkerName,
-                connectToWorldPos.offset(offset),
-                absoluteRotation
-        );
-
-        return node;
-    }
 
     private static StructureNode placeAt(
             ServerLevel level,
@@ -748,6 +769,9 @@ public class PollutedStructurePlacer {
     private record ConnectResult(StructureNode nextVillage, int railCount) {
     }
 
+    private record MiddleConnectResult(StructureNode nextVillage, int railCount) {
+    }
+
     private record SideDungeonPiece(
             String structureName,
             String markerName
@@ -845,111 +869,71 @@ public class PollutedStructurePlacer {
         return false;
     }
 
-    private static boolean tryPlaceWestSideDungeon(
+    public static NetworkResult placeSideDungeonLayoutTest(
             ServerLevel level,
-            List<StructureNode> nodes,
-            StructureNode railNode
+            ServerPlayer player,
+            BlockPos origin
     ) {
-        if (!railNode.hasMarker("polluted_world:west_side_street")) {
-            return false;
-        }
-
-        StructureTemplate template = load(level, "west_side_dungeon_01");
-
-        Rotation rotation = railNode.rotation();
-
-        BlockPos origin = getConnectedAbsoluteOrigin(
-                template,
-                "polluted_world:west_side_street",
-                railNode.marker("polluted_world:west_side_street"),
-                rotation
-        );
-
-        if (collidesWithPlacedStructures(origin, template, nodes, railNode)) {
-            return false;
-        }
-
-        StructureNode dungeon = placeAt(
-                level,
-                "west_side_dungeon_01",
-                template,
-                origin,
-                rotation
-        );
-
-        nodes.add(dungeon);
-        return true;
+        return SideDungeonLayoutTestBuilder.place(level, player, origin);
     }
 
-    private static boolean tryPlaceEastSideDungeon(
+    public static NetworkResult placeStationDungeonStationLayout(
             ServerLevel level,
-            List<StructureNode> nodes,
-            StructureNode railNode
+            ServerPlayer player,
+            BlockPos origin
     ) {
+        return StationDungeonStationTestBuilder.place(level, player, origin);
+    }
 
-        System.out.println(
-                "[PollutedWorld] Side check rail="
-                        + railNode.structureName()
-                        + " rotation=" + railNode.rotation()
-                        + " hasWest=" + railNode.hasMarker("polluted_world:west_side_street")
-                        + " hasEast=" + railNode.hasMarker("polluted_world:east_side_street")
-        );
+    public static NetworkResult placeStationUnitTest(
+            ServerLevel level,
+            ServerPlayer player,
+            BlockPos origin
+    ) {
+        return StationUnitTestBuilder.place(level, player, origin);
+    }
 
-        if (!railNode.hasMarker("polluted_world:east_side_street")) {
-            return false;
+    private static boolean collidesWithUnits(List<PlacedUnit> units, PlacedUnit candidate) {
+        for (PlacedUnit unit : units) {
+            if (unit.intersects(candidate)) {
+                return true;
+            }
         }
 
-        StructureTemplate template = load(level, "east_side_dungeon_01");
+        return false;
+    }
 
-        Rotation rotation = railNode.rotation();
+    private static BlockPos findSafeUnitOrigin(
+            List<PlacedUnit> units,
+            BlockPos start,
+            Vec3i size,
+            int margin,
+            int stepZ,
+            int maxAttempts
+    ) {
+        for (int i = 0; i < maxAttempts; i++) {
+            BlockPos candidateOrigin = start.offset(0, 0, stepZ * i);
 
-        BlockPos origin = getConnectedAbsoluteOrigin(
-                template,
-                "polluted_world:east_side_street",
-                railNode.marker("polluted_world:east_side_street"),
-                rotation
-        );
+            PlacedUnit candidate = new PlacedUnit(
+                    "candidate",
+                    candidateOrigin,
+                    size,
+                    margin
+            );
 
-
-        boolean collides = collidesWithPlacedStructures(origin, template, nodes, railNode);
-
-        System.out.println(
-                "[PollutedWorld] Try west dungeon origin="
-                        + origin
-                        + " rotation=" + rotation
-                        + " collides=" + collides
-        );
-
-        if (collides) {
-            return false;
+            if (!collidesWithUnits(units, candidate)) {
+                return candidateOrigin;
+            }
         }
 
-
-        System.out.println(
-                "[PollutedWorld] Try east dungeon origin="
-                        + origin
-                        + " rotation=" + rotation
-                        + " collides=" + collides
-        );
-
-        if (collides) {
-            return false;
-        }
-
-        if (collidesWithPlacedStructures(origin, template, nodes, railNode)) {
-            return false;
-        }
-
-        StructureNode dungeon = placeAt(
-                level,
-                "east_side_dungeon_01",
-                template,
-                origin,
-                rotation
-        );
-
-        nodes.add(dungeon);
-        return true;
+        throw new IllegalStateException("No safe unit origin found.");
+    }
+    public static NetworkResult placeUnitChainTest(
+            ServerLevel level,
+            ServerPlayer player,
+            BlockPos origin
+    ) {
+        return UnitChainTestBuilder.place(level, player, origin);
     }
 
 

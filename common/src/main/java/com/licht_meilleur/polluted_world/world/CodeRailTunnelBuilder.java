@@ -17,30 +17,319 @@ public class CodeRailTunnelBuilder {
 
     private static final int HALF_WIDTH = 4;
     private static final int AIR_HEIGHT = 5;
-    private static final int LEAD_IN = 4;
 
+    public static void generateTunnel(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
+        List<BlockPos> path = new ArrayList<>();
 
-    public static void generateTunnel(
+        BlockPos current = startRailPos;
+
+        while (current.getX() != endRailPos.getX()) {
+            path.add(current);
+            int step = Integer.compare(endRailPos.getX(), current.getX());
+            current = current.offset(step, 0, 0);
+        }
+
+        while (current.getZ() != endRailPos.getZ()) {
+            path.add(current);
+            int step = Integer.compare(endRailPos.getZ(), current.getZ());
+            current = current.offset(0, 0, step);
+        }
+
+        path.add(endRailPos);
+
+        for (BlockPos pos : path) {
+            carveTunnelCell(level, pos);
+        }
+
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos pos = path.get(i);
+
+            boolean eastWest = i + 1 < path.size()
+                    ? path.get(i + 1).getX() != pos.getX()
+                    : i > 0 && path.get(i - 1).getX() != pos.getX();
+
+            placeRail(level, pos, i, eastWest);
+        }
+    }
+
+    private static void carveTunnelCell(ServerLevel level, BlockPos railPos) {
+        for (int dx = -HALF_WIDTH; dx <= HALF_WIDTH; dx++) {
+            for (int dz = -HALF_WIDTH; dz <= HALF_WIDTH; dz++) {
+                BlockPos floorPos = railPos.offset(dx, -1, dz);
+                level.setBlock(floorPos, Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+
+        for (int dx = -HALF_WIDTH; dx <= HALF_WIDTH; dx++) {
+            for (int dy = 0; dy <= AIR_HEIGHT; dy++) {
+                for (int dz = -HALF_WIDTH; dz <= HALF_WIDTH; dz++) {
+                    BlockPos airPos = railPos.offset(dx, dy, dz);
+                    level.setBlock(airPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+                }
+            }
+        }
+    }
+
+    private static void placeRail(ServerLevel level, BlockPos pos, int index, boolean eastWest) {
+        RailShape shape = eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+
+        if (index % 12 == 0) {
+            level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
+
+            BlockState poweredRail = Blocks.POWERED_RAIL.defaultBlockState()
+                    .setValue(PoweredRailBlock.SHAPE, shape)
+                    .setValue(PoweredRailBlock.POWERED, true);
+
+            level.setBlock(pos, poweredRail, Block.UPDATE_ALL);
+        } else {
+            BlockState rail = Blocks.RAIL.defaultBlockState()
+                    .setValue(RailBlock.SHAPE, shape);
+
+            level.setBlock(pos, rail, Block.UPDATE_ALL);
+        }
+    }
+
+    public static void placeConnectorRail(ServerLevel level, BlockPos a, BlockPos b) {
+        boolean eastWest = a.getZ() == b.getZ();
+
+        RailShape shape = eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+
+        BlockState rail = Blocks.RAIL.defaultBlockState()
+                .setValue(RailBlock.SHAPE, shape);
+
+        level.setBlock(a, rail, Block.UPDATE_ALL);
+        level.setBlock(b, rail, Block.UPDATE_ALL);
+    }
+
+    public static BlockPos generateForwardSpacer(
             ServerLevel level,
             BlockPos startRailPos,
-            Direction startForward,
-            BlockPos endRailPos,
-            Direction endForward
+            Direction forward,
+            int length
     ) {
+        BlockPos current = startRailPos;
+
+        for (int i = 0; i < length; i++) {
+            current = current.relative(forward);
+
+            carveTunnelCellKeepRails(level, current, forward);
+            placeRail(level, current, i, forward == Direction.EAST || forward == Direction.WEST);
+        }
+
+        return current;
+    }
+
+    private static void carveTunnelCellKeepRails(ServerLevel level, BlockPos railPos, Direction forward) {
+        Direction side = forward.getClockWise();
+
+        for (int w = -HALF_WIDTH; w <= HALF_WIDTH; w++) {
+            BlockPos center = railPos.relative(side, w);
+
+            level.setBlock(center.below(), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_ALL);
+
+            for (int dy = 0; dy <= AIR_HEIGHT; dy++) {
+                BlockPos airPos = center.above(dy);
+                BlockState existing = level.getBlockState(airPos);
+
+                if (existing.is(Blocks.RAIL)
+                        || existing.is(Blocks.POWERED_RAIL)
+                        || existing.is(Blocks.REDSTONE_BLOCK)) {
+                    continue;
+                }
+
+                level.setBlock(airPos, Blocks.AIR.defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+    }
+
+    public static void generateSafeConnector(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
+        if (startRailPos.getY() != endRailPos.getY()) {
+            throw new IllegalStateException(
+                    "Rail connector Y mismatch: start=" + startRailPos + " end=" + endRailPos
+            );
+        }
+
         List<BlockPos> path = new ArrayList<>();
+
+        BlockPos current = startRailPos;
+        path.add(current);
+
+        while (current.getX() != endRailPos.getX()) {
+            int step = Integer.compare(endRailPos.getX(), current.getX());
+            current = current.offset(step, 0, 0);
+            path.add(current);
+        }
+
+        while (current.getZ() != endRailPos.getZ()) {
+            int step = Integer.compare(endRailPos.getZ(), current.getZ());
+            current = current.offset(0, 0, step);
+            path.add(current);
+        }
+
+        for (int i = 1; i < path.size() - 1; i++) {
+            carveTunnelCell(level, path.get(i));
+        }
+
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos pos = path.get(i);
+
+            boolean eastWest = i + 1 < path.size()
+                    ? path.get(i + 1).getX() != pos.getX()
+                    : i > 0 && path.get(i - 1).getX() != pos.getX();
+
+            placeRail(level, pos, i, eastWest);
+
+            System.out.println(
+                    "[PollutedWorld] Rail="
+                            + pos
+            );
+        }
+        System.out.println(
+                "[PollutedWorld] Connector start="
+                        + startRailPos
+                        + " end="
+                        + endRailPos
+                        + " length="
+                        + path.size()
+        );
+    }
+    public static void generateSafeConnectorExtended(
+            ServerLevel level,
+            BlockPos startRailPos,
+            BlockPos endRailPos,
+            int extra
+    ) {
+        Direction startToEnd = directionFromTo(startRailPos, endRailPos);
+        Direction endToStart = directionFromTo(endRailPos, startRailPos);
+
+        BlockPos fixedStart = startRailPos.relative(endToStart, extra);
+        BlockPos fixedEnd = endRailPos.relative(startToEnd, extra);
+
+        generateSafeConnector(level, fixedStart, fixedEnd);
+    }
+
+    private static Direction directionFromTo(BlockPos from, BlockPos to) {
+        int dx = Integer.compare(to.getX(), from.getX());
+        int dz = Integer.compare(to.getZ(), from.getZ());
+
+        if (dx > 0) return Direction.EAST;
+        if (dx < 0) return Direction.WEST;
+        if (dz > 0) return Direction.SOUTH;
+        if (dz < 0) return Direction.NORTH;
+
+        return Direction.NORTH;
+    }
+
+    public static void generateDebugConnector(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
+        if (startRailPos.getY() != endRailPos.getY()) {
+            throw new IllegalStateException("Y mismatch: " + startRailPos + " -> " + endRailPos);
+        }
+
+        List<BlockPos> path = new ArrayList<>();
+
+        BlockPos current = startRailPos;
+        path.add(current);
+
+        while (current.getX() != endRailPos.getX()) {
+            int step = Integer.compare(endRailPos.getX(), current.getX());
+            current = current.offset(step, 0, 0);
+            path.add(current);
+        }
+
+        while (current.getZ() != endRailPos.getZ()) {
+            int step = Integer.compare(endRailPos.getZ(), current.getZ());
+            current = current.offset(0, 0, step);
+            path.add(current);
+        }
+
+        // 1. 先に全部掘る
+        for (BlockPos pos : path) {
+            carveTunnelCell(level, pos);
+        }
+
+        // 2. 掘り終わってから中央床だけ目印にする
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos pos = path.get(i);
+
+            if (i % 12 == 0) {
+                level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
+            } else {
+                level.setBlock(pos.below(), Blocks.SMOOTH_STONE.defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+
+        // 3. 最後に目印床の上へレール
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos prev = i > 0 ? path.get(i - 1) : null;
+            BlockPos pos = path.get(i);
+            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
+
+            placeRailByMarker(level, prev, pos, next);
+        }
+
+        System.out.println("[PollutedWorld] DebugConnector start=" + startRailPos
+                + " end=" + endRailPos
+                + " length=" + path.size());
+    }
+
+    private static void placeRailByMarker(ServerLevel level, BlockPos prev, BlockPos pos, BlockPos next) {
+        BlockState floor = level.getBlockState(pos.below());
+
+        if (!floor.is(Blocks.REDSTONE_BLOCK) && !floor.is(Blocks.SMOOTH_STONE)) {
+            return;
+        }
+
+        boolean eastWest;
+
+        if (next != null) {
+            eastWest = next.getX() != pos.getX();
+        } else if (prev != null) {
+            eastWest = prev.getX() != pos.getX();
+        } else {
+            eastWest = false;
+        }
+
+        RailShape shape = eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+
+        // 端は必ず通常レールにする
+        boolean endpoint = prev == null || next == null;
+
+        if (!endpoint && floor.is(Blocks.REDSTONE_BLOCK)) {
+            BlockState poweredRail = Blocks.POWERED_RAIL.defaultBlockState()
+                    .setValue(PoweredRailBlock.SHAPE, shape)
+                    .setValue(PoweredRailBlock.POWERED, true);
+
+            level.setBlock(pos, poweredRail, Block.UPDATE_ALL);
+        } else {
+            BlockState rail = Blocks.RAIL.defaultBlockState()
+                    .setValue(RailBlock.SHAPE, shape);
+
+            level.setBlock(pos, rail, Block.UPDATE_ALL);
+        }
+    }
+
+    private static final int CONNECTOR_LEAD = 8;
+
+    public static void generateFlatConnector(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
+        if (startRailPos.getY() != endRailPos.getY()) {
+            throw new IllegalStateException("Y mismatch: " + startRailPos + " -> " + endRailPos);
+        }
+
+        List<BlockPos> path = new ArrayList<>();
+
+        Direction mainForward = getMainZDirection(startRailPos, endRailPos);
+
+        BlockPos startLead = startRailPos.relative(mainForward, CONNECTOR_LEAD);
+        BlockPos endLead = endRailPos.relative(mainForward.getOpposite(), CONNECTOR_LEAD);
 
         BlockPos current = startRailPos;
         addUnique(path, current);
 
-        BlockPos startLeadEnd = startRailPos.relative(startForward, LEAD_IN);
-        BlockPos endLeadEnd = endRailPos.relative(endForward.getOpposite(), LEAD_IN);
-
-        current = lineTo(path, current, startLeadEnd);
-
-        current = lineX(path, current, endLeadEnd.getX());
-        current = lineZ(path, current, endLeadEnd.getZ());
-
-        current = lineTo(path, current, endRailPos);
+        current = lineZ(path, current, startLead.getZ());
+        current = lineX(path, current, endLead.getX());
+        current = lineZ(path, current, endLead.getZ());
+        current = lineX(path, current, endRailPos.getX());
+        lineZ(path, current, endRailPos.getZ());
 
         for (int i = 0; i < path.size(); i++) {
             BlockPos prev = i > 0 ? path.get(i - 1) : null;
@@ -48,8 +337,18 @@ public class CodeRailTunnelBuilder {
             BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
 
             Direction forward = getForwardDirection(prev, pos, next);
+            carveFlatTunnelSlice(level, pos, forward);
+        }
 
-            carveTunnelCell(level, pos, forward, path);
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos pos = path.get(i);
+            boolean endpoint = i == 0 || i == path.size() - 1;
+
+            if (!endpoint && i % 12 == 0) {
+                level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
+            } else {
+                level.setBlock(pos.below(), Blocks.SMOOTH_STONE.defaultBlockState(), Block.UPDATE_ALL);
+            }
         }
 
         for (int i = 0; i < path.size(); i++) {
@@ -57,71 +356,14 @@ public class CodeRailTunnelBuilder {
             BlockPos pos = path.get(i);
             BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
 
-            placeRail(level, prev, pos, next, i);
+            placeRailByMarker(level, prev, pos, next);
         }
     }
 
-    public static void generateTunnelFromOuts(
-            ServerLevel level,
-            BlockPos startOutRailPos,
-            Direction startForward,
-            BlockPos endOutRailPos,
-            Direction endForward
-    ) {
-        System.out.println("[PollutedWorld] CodeRail startOut=" + startOutRailPos
-                + " startForward=" + startForward
-                + " startTip=" + startOutRailPos.relative(startForward, LEAD_IN));
-
-        System.out.println("[PollutedWorld] CodeRail endOut=" + endOutRailPos
-                + " endForward=" + endForward
-                + " endTip=" + endOutRailPos.relative(endForward, LEAD_IN));
-
-        BlockPos startTip = startOutRailPos.relative(startForward, LEAD_IN);
-        BlockPos endTip = endOutRailPos.relative(endForward, LEAD_IN);
-
-        buildSegment(level, startOutRailPos, startTip);
-        buildSegment(level, endOutRailPos, endTip);
-        buildSegment(level, startTip, endTip);
-    }
-
-    private static void buildSegment(ServerLevel level, BlockPos from, BlockPos to) {
-        List<BlockPos> path = new ArrayList<>();
-
-        BlockPos current = from;
-        addUnique(path, current);
-
-        current = lineX(path, current, to.getX());
-        lineZ(path, current, to.getZ());
-
-        // 先にレールを置く
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos prev = i > 0 ? path.get(i - 1) : null;
-            BlockPos pos = path.get(i);
-            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
-
-            placeRail(level, prev, pos, next, i);
+    private static void addUnique(List<BlockPos> path, BlockPos pos) {
+        if (path.isEmpty() || !path.get(path.size() - 1).equals(pos)) {
+            path.add(pos);
         }
-
-        // 後から周囲を掘る。ただしレール位置は消さない
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos prev = i > 0 ? path.get(i - 1) : null;
-            BlockPos pos = path.get(i);
-            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
-
-            Direction forward = getForwardDirection(prev, pos, next);
-            carveTunnelCell(level, pos, forward, path);
-        }
-    }
-
-
-
-    private static BlockPos lineTo(List<BlockPos> path, BlockPos start, BlockPos target) {
-        BlockPos current = start;
-
-        current = lineX(path, current, target.getX());
-        current = lineZ(path, current, target.getZ());
-
-        return current;
     }
 
     private static BlockPos lineX(List<BlockPos> path, BlockPos start, int targetX) {
@@ -148,13 +390,11 @@ public class CodeRailTunnelBuilder {
         return current;
     }
 
-    private static void addUnique(List<BlockPos> path, BlockPos pos) {
-        if (path.isEmpty() || !path.get(path.size() - 1).equals(pos)) {
-            path.add(pos);
-        }
+    private static Direction getMainZDirection(BlockPos start, BlockPos end) {
+        return end.getZ() >= start.getZ() ? Direction.SOUTH : Direction.NORTH;
     }
 
-    private static void carveTunnelCell(ServerLevel level, BlockPos railPos, Direction forward, List<BlockPos> railPath) {
+    private static void carveFlatTunnelSlice(ServerLevel level, BlockPos railPos, Direction forward) {
         Direction side = forward.getClockWise();
 
         for (int w = -HALF_WIDTH; w <= HALF_WIDTH; w++) {
@@ -165,8 +405,11 @@ public class CodeRailTunnelBuilder {
             for (int dy = 0; dy <= AIR_HEIGHT; dy++) {
                 BlockPos airPos = center.above(dy);
 
-                // レール本体の位置は絶対に消さない
-                if (railPath.contains(airPos)) {
+                BlockState existing = level.getBlockState(airPos);
+
+                if (existing.is(Blocks.RAIL)
+                        || existing.is(Blocks.POWERED_RAIL)
+                        || existing.is(Blocks.REDSTONE_BLOCK)) {
                     continue;
                 }
 
@@ -187,65 +430,6 @@ public class CodeRailTunnelBuilder {
         return Direction.NORTH;
     }
 
-    private static Direction directionFromTo(BlockPos from, BlockPos to) {
-        int dx = Integer.compare(to.getX(), from.getX());
-        int dz = Integer.compare(to.getZ(), from.getZ());
 
-        if (dx > 0) return Direction.EAST;
-        if (dx < 0) return Direction.WEST;
-        if (dz > 0) return Direction.SOUTH;
-        if (dz < 0) return Direction.NORTH;
 
-        return Direction.NORTH;
-    }
-
-    private static void placeRail(ServerLevel level, BlockPos prev, BlockPos pos, BlockPos next, int index) {
-        RailShape shape = getRailShape(prev, pos, next);
-        boolean corner = shape != RailShape.EAST_WEST && shape != RailShape.NORTH_SOUTH;
-
-        if (level.getBlockState(pos.below()).isAir()) {
-            level.setBlock(pos.below(), Blocks.STONE_BRICKS.defaultBlockState(), Block.UPDATE_ALL);
-        }
-
-        if (!corner && index % 12 == 0) {
-            level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
-
-            BlockState poweredRail = Blocks.POWERED_RAIL.defaultBlockState()
-                    .setValue(PoweredRailBlock.SHAPE, shape)
-                    .setValue(PoweredRailBlock.POWERED, true);
-
-            level.setBlock(pos, poweredRail, Block.UPDATE_ALL);
-        } else {
-            BlockState rail = Blocks.RAIL.defaultBlockState()
-                    .setValue(RailBlock.SHAPE, shape);
-
-            level.setBlock(pos, rail, Block.UPDATE_ALL);
-        }
-    }
-
-    private static RailShape getRailShape(BlockPos prev, BlockPos pos, BlockPos next) {
-        if (prev == null && next == null) {
-            return RailShape.NORTH_SOUTH;
-        }
-
-        if (prev == null) {
-            return next.getX() != pos.getX() ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
-        }
-
-        if (next == null) {
-            return prev.getX() != pos.getX() ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
-        }
-
-        boolean north = prev.getZ() < pos.getZ() || next.getZ() < pos.getZ();
-        boolean south = prev.getZ() > pos.getZ() || next.getZ() > pos.getZ();
-        boolean west = prev.getX() < pos.getX() || next.getX() < pos.getX();
-        boolean east = prev.getX() > pos.getX() || next.getX() > pos.getX();
-
-        if (north && east) return RailShape.NORTH_EAST;
-        if (north && west) return RailShape.NORTH_WEST;
-        if (south && east) return RailShape.SOUTH_EAST;
-        if (south && west) return RailShape.SOUTH_WEST;
-
-        return east || west ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
-    }
 }
