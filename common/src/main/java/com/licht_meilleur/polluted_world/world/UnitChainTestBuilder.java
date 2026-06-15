@@ -33,6 +33,9 @@ public class UnitChainTestBuilder {
     private static final int MAX_Z_ATTEMPTS = 32;
     private static final int NORMAL_RAILS_FROM_STATION = 2;
 
+    private static final int MIDDLE_LANE_SPREAD_STEP = 4;
+    private static final int MIDDLE_LANE_SPREAD_MAX = 256;
+
     public static PollutedStructurePlacer.NetworkResult place(
             ServerLevel level,
             ServerPlayer player,
@@ -40,122 +43,128 @@ public class UnitChainTestBuilder {
     ) {
         List<StructureNode> nodes = new ArrayList<>();
         List<UnitBounds> units = new ArrayList<>();
-
-        StationDefinition startStationDef = StationRegistry.START_STATION;
-        StationDefinition secondStationDef = WeightedPicker.pick(
-                level,
-                StationRegistry.ADDITIONAL_STATIONS,
-                StationDefinition::weight
-        );
-
-        StructureTemplate startEntranceTemplate = load(level, startStationDef.entranceName());
-        StructureTemplate startVillageTemplate = load(level, startStationDef.villageName());
-        StructureTemplate secondEntranceTemplate = load(level, secondStationDef.entranceName());
-        StructureTemplate secondVillageTemplate = load(level, secondStationDef.villageName());
+        List<StationDefinition> stationDeck = createStationDeck();
 
         StructureTemplate railGateTemplate = load(level, "rail_gate");
         StructureTemplate normalRailTemplate = load(level, "normal_rail");
 
-        StationUnit firstStation = placeStationUnit(
+        StationDefinition startStationDef = StationRegistry.START_STATION;
+
+        StationUnit currentStation = placeStationUnit(
                 level,
                 nodes,
                 origin,
                 startStationDef.entranceName(),
-                startEntranceTemplate,
+                load(level, startStationDef.entranceName()),
                 startStationDef.villageName(),
-                startVillageTemplate,
+                load(level, startStationDef.villageName()),
                 railGateTemplate,
                 normalRailTemplate
         );
 
-        units.add(firstStation.bounds("station_a", STATION_MARGIN));
+        units.add(currentStation.bounds("station_start", STATION_MARGIN));
 
         boolean teleported = teleportToFirstBarrier(
                 player,
-                firstStation.village(),
-                firstStation.entrance()
+                currentStation.village(),
+                currentStation.entrance()
         );
 
-        MiddleRailPairPlan middlePlan = randomMiddleRailPairPlan(level);
+        int stationIndex = 1;
 
-        BlockPos pairStart = new BlockPos(
-                firstStation.westOutConnect().getX(),
-                firstStation.westOutConnect().getY(),
-                Math.max(firstStation.westOutConnect().getZ(), firstStation.eastOutConnect().getZ()) + SEARCH_STEP_Z
-        );
+        while (!stationDeck.isEmpty()) {
+            StationDefinition nextStationDef = drawStationFromDeck(level, stationDeck);
 
-        BlockPos pairOrigin = findSafeMiddleRailPairOrigin(
-                level,
-                units,
-                pairStart,
-                firstStation,
-                middlePlan
-        );
+            MiddleRailPairPlan middlePlan = randomMiddleRailPairPlan(level);
 
-        MiddleRailPairUnit middlePair = placeMiddleRailPairUnit(
-                level,
-                nodes,
-                pairOrigin,
-                firstStation,
-                middlePlan
-        );
+            BlockPos pairStart = new BlockPos(
+                    currentStation.westOutConnect().getX(),
+                    currentStation.westOutConnect().getY(),
+                    Math.max(
+                            currentStation.westOutConnect().getZ(),
+                            currentStation.eastOutConnect().getZ()
+                    ) + SEARCH_STEP_Z
+            );
 
-        units.add(middlePair.bounds());
+            BlockPos pairOrigin = findSafeMiddleRailPairOrigin(
+                    level,
+                    units,
+                    pairStart,
+                    currentStation,
+                    middlePlan
+            );
 
-        BlockPos secondStationStart = new BlockPos(
-                origin.getX(),
-                origin.getY(),
-                Math.max(middlePair.westOutConnect().getZ(), middlePair.eastOutConnect().getZ()) + SEARCH_STEP_Z
-        );
+            MiddleRailPairUnit middlePair = placeMiddleRailPairUnit(
+                    level,
+                    nodes,
+                    pairOrigin,
+                    currentStation,
+                    middlePlan
+            );
 
-        Vec3i secondStationSize = combinedSize(secondEntranceTemplate, secondVillageTemplate);
+            units.add(middlePair.bounds());
 
-        BlockPos secondStationOrigin = findSafeUnitOriginZOnly(
-                units,
-                secondStationStart,
-                secondStationSize,
-                STATION_MARGIN,
-                SEARCH_STEP_Z,
-                MAX_Z_ATTEMPTS
-        );
+            BlockPos nextStationStart = new BlockPos(
+                    origin.getX(),
+                    origin.getY(),
+                    Math.max(
+                            middlePair.westOutConnect().getZ(),
+                            middlePair.eastOutConnect().getZ()
+                    ) + SEARCH_STEP_Z
+            );
 
-        StationUnit secondStation = placeStationUnit(
-                level,
-                nodes,
-                secondStationOrigin,
-                secondStationDef.entranceName(),
-                secondEntranceTemplate,
-                secondStationDef.villageName(),
-                secondVillageTemplate,
-                railGateTemplate,
-                normalRailTemplate
-        );
+            StructureTemplate nextEntranceTemplate = load(level, nextStationDef.entranceName());
+            StructureTemplate nextVillageTemplate = load(level, nextStationDef.villageName());
 
-        units.add(secondStation.bounds("station_b", STATION_MARGIN));
+            Vec3i nextStationSize = combinedSize(
+                    nextEntranceTemplate,
+                    nextVillageTemplate
+            );
 
-        CodeRailTunnelBuilder.generateFlatConnector(
-                level,
-                firstStation.westOutConnect().below(),
-                middlePair.westInConnect().below()
-        );
+            BlockPos nextStationOrigin = findSafeUnitOriginZOnly(
+                    units,
+                    nextStationStart,
+                    nextStationSize,
+                    STATION_MARGIN,
+                    SEARCH_STEP_Z,
+                    MAX_Z_ATTEMPTS
+            );
 
-        CodeRailTunnelBuilder.generateFlatConnector(
-                level,
-                middlePair.westOutConnect().below(),
-                secondStation.westInConnect().below()
-        );
+            StationUnit nextStation = placeStationUnit(
+                    level,
+                    nodes,
+                    nextStationOrigin,
+                    nextStationDef.entranceName(),
+                    nextEntranceTemplate,
+                    nextStationDef.villageName(),
+                    nextVillageTemplate,
+                    railGateTemplate,
+                    normalRailTemplate
+            );
 
-        CodeRailTunnelBuilder.generateFlatConnector(
-                level,
-                firstStation.eastOutConnect().below(),
-                middlePair.eastInConnect().below()
-        );
+            units.add(nextStation.bounds("station_" + stationIndex, STATION_MARGIN));
 
-        CodeRailTunnelBuilder.generateFlatConnector(
-                level,
-                middlePair.eastOutConnect().below(),
-                secondStation.eastInConnect().below()
-        );
+            CodeRailTunnelBuilder.generateSeparatedLaneConnectors(
+                    level,
+                    currentStation.westOutConnect().below(),
+                    middlePair.westInConnect().below(),
+                    currentStation.eastOutConnect().below(),
+                    middlePair.eastInConnect().below(),
+                    12
+            );
+
+            CodeRailTunnelBuilder.generateSeparatedLaneConnectors(
+                    level,
+                    middlePair.westOutConnect().below(),
+                    nextStation.westInConnect().below(),
+                    middlePair.eastOutConnect().below(),
+                    nextStation.eastInConnect().below(),
+                    12
+            );
+
+            currentStation = nextStation;
+            stationIndex++;
+        }
 
         int barrierCount = nodes.stream()
                 .mapToInt(StructureNode::barrierCount)
@@ -221,6 +230,12 @@ public class UnitChainTestBuilder {
     ) {
     }
 
+    private record LaneConnects(
+            BlockPos west,
+            BlockPos east
+    ) {
+    }
+
     private static StationUnit placeStationUnit(
             ServerLevel level,
             List<StructureNode> nodes,
@@ -277,14 +292,33 @@ public class UnitChainTestBuilder {
                 normalRailTemplate
         );
 
+        LaneEnds physicalWest;
+        LaneEnds physicalEast;
+
+        if (west.outConnect().getX() <= east.outConnect().getX()) {
+            physicalWest = west;
+            physicalEast = east;
+        } else {
+            physicalWest = east;
+            physicalEast = west;
+        }
+
+        System.out.println(
+                "[PollutedWorld] Station physical lanes"
+                        + " westIn=" + physicalWest.inConnect()
+                        + " westOut=" + physicalWest.outConnect()
+                        + " eastIn=" + physicalEast.inConnect()
+                        + " eastOut=" + physicalEast.outConnect()
+        );
+
         return new StationUnit(
                 entrance,
                 village,
                 unitNodes,
-                west.inConnect(),
-                west.outConnect(),
-                east.inConnect(),
-                east.outConnect()
+                physicalWest.inConnect(),
+                physicalWest.outConnect(),
+                physicalEast.inConnect(),
+                physicalEast.outConnect()
         );
     }
 
@@ -462,35 +496,90 @@ public class UnitChainTestBuilder {
     ) {
         List<StructureNode> pairNodes = new ArrayList<>();
 
-        BlockPos westConnect = new BlockPos(
-                referenceStation.westOutConnect().getX(),
-                referenceStation.westOutConnect().getY(),
-                pairOrigin.getZ()
+        LaneConnects connects = findSeparatedMiddleLaneConnects(
+                level,
+                pairOrigin,
+                referenceStation,
+                plan,
+                Rotation.CLOCKWISE_180
         );
 
-        BlockPos eastConnect = new BlockPos(
-                referenceStation.eastOutConnect().getX(),
-                referenceStation.eastOutConnect().getY(),
-                pairOrigin.getZ()
-        );
+        List<StructureNode> firstLaneNodes = new ArrayList<>();
+        List<StructureNode> secondLaneNodes = new ArrayList<>();
 
-        StructureNode westRail = placeRailCluster(
+        StructureNode firstRail = placeRailCluster(
                 level,
                 nodes,
-                pairNodes,
+                firstLaneNodes,
                 plan.west(),
-                westConnect,
+                connects.west(),
                 Rotation.CLOCKWISE_180
         );
 
-        StructureNode eastRail = placeRailCluster(
+        StructureNode secondRail = placeRailCluster(
                 level,
                 nodes,
-                pairNodes,
+                secondLaneNodes,
                 plan.east(),
-                eastConnect,
+                connects.east(),
                 Rotation.CLOCKWISE_180
         );
+
+
+
+        pairNodes.addAll(firstLaneNodes);
+        pairNodes.addAll(secondLaneNodes);
+
+        UnitBounds firstBounds = UnitBounds.fromNodes(
+                "middle_lane_first",
+                firstLaneNodes,
+                MIDDLE_RAIL_PAIR_MARGIN
+        );
+
+        UnitBounds secondBounds = UnitBounds.fromNodes(
+                "middle_lane_second",
+                secondLaneNodes,
+                MIDDLE_RAIL_PAIR_MARGIN
+        );
+
+        if (firstBounds.intersects(secondBounds)) {
+            throw new IllegalStateException(
+                    "Middle lane collision after placement: "
+                            + " first=" + firstBounds
+                            + " second=" + secondBounds
+            );
+        }
+
+        StructureNode physicalWestRail;
+        StructureNode physicalEastRail;
+
+        if (firstRail.marker("polluted_world:rail_in").getX()
+                <= secondRail.marker("polluted_world:rail_in").getX()) {
+            physicalWestRail = firstRail;
+            physicalEastRail = secondRail;
+        } else {
+            physicalWestRail = secondRail;
+            physicalEastRail = firstRail;
+        }
+
+        LaneEnds westEnds = physicalLaneEndsByZ(physicalWestRail);
+        LaneEnds eastEnds = physicalLaneEndsByZ(physicalEastRail);
+
+        debugLogMiddleLane("FIRST_MIDDLE_LANE", firstRail, firstLaneNodes);
+        debugLogMiddleLane("SECOND_MIDDLE_LANE", secondRail, secondLaneNodes);
+
+        System.out.println("========== [PollutedWorld] STATION CONNECTS ==========");
+        System.out.println("station westIn=" + referenceStation.westInConnect());
+        System.out.println("station westOut=" + referenceStation.westOutConnect());
+        System.out.println("station eastIn=" + referenceStation.eastInConnect());
+        System.out.println("station eastOut=" + referenceStation.eastOutConnect());
+
+        System.out.println("========== [PollutedWorld] CONNECT RESULT ==========");
+        System.out.println("middle westIn=" + westEnds.inConnect());
+        System.out.println("middle westOut=" + westEnds.outConnect());
+        System.out.println("middle eastIn=" + eastEnds.inConnect());
+        System.out.println("middle eastOut=" + eastEnds.outConnect());
+
 
         return new MiddleRailPairUnit(
                 UnitBounds.fromNodes(
@@ -498,11 +587,22 @@ public class UnitChainTestBuilder {
                         pairNodes,
                         MIDDLE_RAIL_PAIR_MARGIN
                 ),
-                westRail.marker("polluted_world:rail_in"),
-                westRail.marker("polluted_world:rail_out"),
-                eastRail.marker("polluted_world:rail_in"),
-                eastRail.marker("polluted_world:rail_out")
+                westEnds.inConnect(),
+                westEnds.outConnect(),
+                eastEnds.inConnect(),
+                eastEnds.outConnect()
         );
+    }
+
+    private static LaneEnds physicalLaneEndsByZ(StructureNode rail) {
+        BlockPos a = rail.marker("polluted_world:rail_in");
+        BlockPos b = rail.marker("polluted_world:rail_out");
+
+        if (a.getZ() <= b.getZ()) {
+            return new LaneEnds(a, b);
+        }
+
+        return new LaneEnds(b, a);
     }
 
     private static UnitBounds createVirtualMiddleRailPairBounds(
@@ -514,23 +614,19 @@ public class UnitChainTestBuilder {
     ) {
         List<StructureNode> virtualNodes = new ArrayList<>();
 
-        BlockPos westConnect = new BlockPos(
-                referenceStation.westOutConnect().getX(),
-                referenceStation.westOutConnect().getY(),
-                pairOrigin.getZ()
-        );
-
-        BlockPos eastConnect = new BlockPos(
-                referenceStation.eastOutConnect().getX(),
-                referenceStation.eastOutConnect().getY(),
-                pairOrigin.getZ()
+        LaneConnects connects = findSeparatedMiddleLaneConnects(
+                level,
+                pairOrigin,
+                referenceStation,
+                plan,
+                Rotation.CLOCKWISE_180
         );
 
         virtualRailCluster(
                 level,
                 virtualNodes,
                 plan.west(),
-                westConnect,
+                connects.west(),
                 Rotation.CLOCKWISE_180
         );
 
@@ -538,7 +634,7 @@ public class UnitChainTestBuilder {
                 level,
                 virtualNodes,
                 plan.east(),
-                eastConnect,
+                connects.east(),
                 Rotation.CLOCKWISE_180
         );
 
@@ -547,6 +643,87 @@ public class UnitChainTestBuilder {
                 virtualNodes,
                 margin
         );
+    }
+
+    private static LaneConnects findSeparatedMiddleLaneConnects(
+            ServerLevel level,
+            BlockPos pairOrigin,
+            StationUnit referenceStation,
+            MiddleRailPairPlan plan,
+            Rotation rotation
+    ) {
+        int baseWestX = referenceStation.westOutConnect().getX();
+        int baseEastX = referenceStation.eastOutConnect().getX();
+
+        int y = referenceStation.westOutConnect().getY();
+        int z = pairOrigin.getZ();
+
+        for (int spread = 0; spread <= MIDDLE_LANE_SPREAD_MAX; spread += MIDDLE_LANE_SPREAD_STEP) {
+            BlockPos westConnect = new BlockPos(
+                    baseWestX - spread,
+                    y,
+                    z
+            );
+
+            BlockPos eastConnect = new BlockPos(
+                    baseEastX + spread,
+                    y,
+                    z
+            );
+
+            List<StructureNode> westNodes = new ArrayList<>();
+            List<StructureNode> eastNodes = new ArrayList<>();
+
+            virtualRailCluster(
+                    level,
+                    westNodes,
+                    plan.west(),
+                    westConnect,
+                    rotation
+            );
+
+            virtualRailCluster(
+                    level,
+                    eastNodes,
+                    plan.east(),
+                    eastConnect,
+                    rotation
+            );
+
+            UnitBounds westBounds = UnitBounds.fromNodes(
+                    "middle_west_lane_candidate",
+                    westNodes,
+                    MIDDLE_RAIL_PAIR_MARGIN
+            );
+
+            UnitBounds eastBounds = UnitBounds.fromNodes(
+                    "middle_east_lane_candidate",
+                    eastNodes,
+                    MIDDLE_RAIL_PAIR_MARGIN
+            );
+
+            if (!westBounds.intersects(eastBounds)) {
+                System.out.println(
+                        "[PollutedWorld] Middle lanes separated"
+                                + " spread=" + spread
+                                + " westConnect=" + westConnect
+                                + " eastConnect=" + eastConnect
+                                + " westBounds=" + westBounds
+                                + " eastBounds=" + eastBounds
+                );
+
+                return new LaneConnects(westConnect, eastConnect);
+            }
+
+            System.out.println(
+                    "[PollutedWorld] Middle lanes still collide"
+                            + " spread=" + spread
+                            + " westBounds=" + westBounds
+                            + " eastBounds=" + eastBounds
+            );
+        }
+
+        throw new IllegalStateException("No safe middle lane spread found.");
     }
 
     private static StructureNode placeRailCluster(
@@ -874,5 +1051,75 @@ public class UnitChainTestBuilder {
         }
 
         return baseGap + reserve;
+    }
+
+    private static void debugLogMiddleLane(
+            String label,
+            StructureNode rail,
+            List<StructureNode> laneNodes
+    ) {
+        BlockPos railIn = rail.marker("polluted_world:rail_in");
+        BlockPos railOut = rail.marker("polluted_world:rail_out");
+
+        UnitBounds bounds = UnitBounds.fromNodes(
+                label + "_bounds",
+                laneNodes,
+                MIDDLE_RAIL_PAIR_MARGIN
+        );
+
+        System.out.println("========== [PollutedWorld] " + label + " ==========");
+        System.out.println("rail=" + rail.structureName());
+        System.out.println("origin=" + rail.origin());
+        System.out.println("rotation=" + rail.rotation());
+        System.out.println("rail_in=" + railIn);
+        System.out.println("rail_out=" + railOut);
+        System.out.println("physicalInByZ=" + physicalLaneEndsByZ(rail).inConnect());
+        System.out.println("physicalOutByZ=" + physicalLaneEndsByZ(rail).outConnect());
+        System.out.println("bounds=" + bounds);
+
+        for (StructureNode node : laneNodes) {
+            System.out.println(
+                    "  node="
+                            + node.structureName()
+                            + " origin=" + node.origin()
+                            + " size=" + node.size()
+                            + " minX=" + node.minX()
+                            + " maxX=" + node.maxX()
+                            + " minZ=" + node.minZ()
+                            + " maxZ=" + node.maxZ()
+            );
+        }
+    }
+
+    private static List<StationDefinition> createStationDeck() {
+        return new ArrayList<>(StationRegistry.ADDITIONAL_STATIONS);
+    }
+
+    private static StationDefinition drawStationFromDeck(
+            ServerLevel level,
+            List<StationDefinition> deck
+    ) {
+        if (deck.isEmpty()) {
+            throw new IllegalStateException("Station deck is empty.");
+        }
+
+        int totalWeight = deck.stream()
+                .mapToInt(StationDefinition::weight)
+                .sum();
+
+        int roll = level.getRandom().nextInt(totalWeight);
+        int cursor = 0;
+
+        for (int i = 0; i < deck.size(); i++) {
+            StationDefinition definition = deck.get(i);
+            cursor += definition.weight();
+
+            if (roll < cursor) {
+                deck.remove(i);
+                return definition;
+            }
+        }
+
+        return deck.remove(deck.size() - 1);
     }
 }

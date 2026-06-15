@@ -1,7 +1,7 @@
 {
-  "has_precipitation": true,
+  "has_precipitation": false,
   "temperature": 0.7,
-  "downfall": 0.2,
+  "downfall": 0.0,
   "effects": {
     "fog_color": 5592405,
     "water_color": 2960685,

@@ -710,6 +710,39 @@ public class PollutedStructurePlacer {
 
         return placeTwoStationNetwork(level, player, origin);
     }
+
+    public static NetworkResult placeUnitChainOnSurface(
+            ServerLevel level,
+            ServerPlayer player,
+            BlockPos nearPos
+    ) {
+        StructureTemplate entranceTemplate = load(level, "station_entrance_01");
+
+        BlockPos surfacePos = findFlatSurface(level, nearPos, 64, 96)
+                .orElseThrow(() -> new IllegalStateException("No valid surface found near " + nearPos));
+
+        BlockPos anchorLocalPos = getLocalMarkerPos(
+                entranceTemplate,
+                "polluted_world:surface_anchor",
+                Rotation.NONE
+        );
+
+        BlockPos origin = new BlockPos(
+                surfacePos.getX() - anchorLocalPos.getX(),
+                surfacePos.getY() - anchorLocalPos.getY(),
+                surfacePos.getZ() - anchorLocalPos.getZ()
+        );
+
+        System.out.println(
+                "[PollutedWorld] Start unit chain surface="
+                        + surfacePos
+                        + " origin="
+                        + origin
+        );
+
+        return UnitChainTestBuilder.place(level, player, origin);
+    }
+
     private static Optional<BlockPos> findFlatSurface(ServerLevel level, BlockPos center, int targetY, int radius) {
         for (int r = 0; r <= radius; r++) {
             for (int dx = -r; dx <= r; dx++) {
@@ -934,6 +967,52 @@ public class PollutedStructurePlacer {
             BlockPos origin
     ) {
         return UnitChainTestBuilder.place(level, player, origin);
+    }
+
+    public static NetworkResult placeSurfaceRuinTest(
+            ServerLevel level,
+            ServerPlayer player,
+            BlockPos nearPos
+    ) {
+        var definition = com.licht_meilleur.polluted_world.world.registry.WeightedPicker.pick(
+                level,
+                com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL,
+                com.licht_meilleur.polluted_world.world.definition.SurfaceStructureDefinition::weight
+        );
+
+        StructureTemplate template = load(level, definition.structureName());
+
+        BlockPos surfacePos = findFlatSurface(level, nearPos, 64, 96)
+                .orElseThrow(() -> new IllegalStateException("No valid surface found near " + nearPos));
+
+        BlockPos anchorLocalPos = getLocalMarkerPos(
+                template,
+                definition.anchorMarker(),
+                Rotation.NONE
+        );
+
+        BlockPos origin = new BlockPos(
+                surfacePos.getX() - anchorLocalPos.getX(),
+                surfacePos.getY() - anchorLocalPos.getY(),
+                surfacePos.getZ() - anchorLocalPos.getZ()
+        );
+
+        StructureNode node = placeAt(
+                level,
+                definition.structureName(),
+                template,
+                origin,
+                Rotation.NONE
+        );
+
+        int barrierCount = node.barrierCount();
+        node.removeMarkers(level);
+
+        return new NetworkResult(
+                1,
+                barrierCount,
+                false
+        );
     }
 
 

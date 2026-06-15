@@ -15,6 +15,7 @@ import net.minecraft.server.level.ServerPlayer;
 import com.licht_meilleur.polluted_world.pollution.SurfacePollutionTransformer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerChunkEvents;
 import com.licht_meilleur.polluted_world.worldgen.PollutedRegion;
+import net.minecraft.world.level.chunk.LevelChunk;
 import terrablender.api.Regions;
 
 
@@ -24,15 +25,20 @@ public class PollutedWorldFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         System.out.println("[PollutedWorld] Fabric init");
+/*
+        ServerChunkEvents.CHUNK_LOAD.register((serverLevel, worldChunk, generated) -> {
+            if (!generated) {
+                return;
+            }
 
-        /*ServerChunkEvents.CHUNK_LOAD.register((level, chunk, generated) -> {
-            if (!generated) return;
+            if (!(worldChunk instanceof LevelChunk chunk)) {
+                return;
+            }
 
-            SurfacePollutionTransformer.transformChunk(level, chunk);
+            SurfacePollutionTransformer.transformChunk(serverLevel, chunk);
         });
 
-         */
-        //Regions.register(new PollutedRegion());
+ */
 
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             PollutedWorldCommands.register(dispatcher);

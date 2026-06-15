@@ -44,6 +44,12 @@ public class PollutedWorldCommands {
                         .then(Commands.literal("unit_chain")
                                 .executes(ctx -> placeUnitChain(ctx.getSource())))
 
+                        .then(Commands.literal("surface_ruin")
+                                .executes(ctx -> placeSurfaceRuin(ctx.getSource())))
+
+
+
+
         );
     }
 
@@ -273,6 +279,38 @@ public class PollutedWorldCommands {
             return 1;
         } catch (Exception e) {
             source.sendFailure(Component.literal("Failed unit chain: " + e.getMessage()));
+            return 0;
+        }
+    }
+
+    private static int placeSurfaceRuin(CommandSourceStack source) {
+        ServerPlayer player = source.getPlayer();
+
+        if (player == null) {
+            source.sendFailure(Component.literal("This command must be used by a player."));
+            return 0;
+        }
+
+        try {
+            PollutedStructurePlacer.NetworkResult result =
+                    PollutedStructurePlacer.placeSurfaceRuinTest(
+                            player.level(),
+                            player,
+                            player.blockPosition()
+                    );
+
+            source.sendSuccess(
+                    () -> Component.literal(
+                            "Placed surface ruin"
+                                    + " / parts: " + result.railCount()
+                                    + " / barrier: " + result.barrierMarkers()
+                    ),
+                    true
+            );
+
+            return 1;
+        } catch (Exception e) {
+            source.sendFailure(Component.literal("Failed surface ruin: " + e.getMessage()));
             return 0;
         }
     }

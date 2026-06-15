@@ -1,5 +1,6 @@
 package com.licht_meilleur.polluted_world.pollution;
 
+import com.licht_meilleur.polluted_world.world.ModBiomeTags;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.tags.BlockTags;
@@ -12,6 +13,8 @@ public final class SurfacePollutionTransformer {
 
     private SurfacePollutionTransformer() {
     }
+
+
 
     public static void transformChunk(ServerLevel level, LevelChunk chunk) {
         ChunkPos chunkPos = chunk.getPos();
@@ -27,6 +30,10 @@ public final class SurfacePollutionTransformer {
                         z
                 );
 
+                if (!level.getBiome(new BlockPos(x, surfaceY, z)).is(ModBiomeTags.POLLUTED_BIOMES)) {
+                    continue;
+                }
+
                 transformColumn(level, new BlockPos(x, surfaceY, z), x, z);
             }
         }
@@ -38,6 +45,13 @@ public final class SurfacePollutionTransformer {
             BlockState state = level.getBlockState(pos);
 
             int seed = hash(pos.getX(), pos.getY(), pos.getZ());
+
+            if (isSurfaceWaterOrIce(state)) {
+                if (surface.getY() >= 55) {
+                    level.setBlock(pos, Blocks.MUD.defaultBlockState(), 2);
+                }
+                continue;
+            }
 
             if (state.is(Blocks.GRASS_BLOCK)) {
                 level.setBlock(pos, randomBool(seed, 75)
@@ -80,4 +94,16 @@ public final class SurfacePollutionTransformer {
     private static boolean randomBool(int seed, int percent) {
         return Math.floorMod(seed, 100) < percent;
     }
+
+
+
+    private static boolean isSurfaceWaterOrIce(BlockState state) {
+        return state.is(Blocks.WATER)
+                || state.is(Blocks.ICE)
+                || state.is(Blocks.FROSTED_ICE)
+                || state.is(Blocks.PACKED_ICE)
+                || state.is(Blocks.BLUE_ICE);
+    }
+
+
 }

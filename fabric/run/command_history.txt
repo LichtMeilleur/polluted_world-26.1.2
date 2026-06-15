@@ -30,3 +30,9 @@
 /polluted_place unit_chain
 /weather clear
 /polluted_place unit_chain
+/polluted_place
+/polluted_place unit_chain
+/time add 1200d
+/time set
+/time set minecraft:day
+/polluted_place unit_chain

@@ -89,17 +89,7 @@ public class CodeRailTunnelBuilder {
         }
     }
 
-    public static void placeConnectorRail(ServerLevel level, BlockPos a, BlockPos b) {
-        boolean eastWest = a.getZ() == b.getZ();
 
-        RailShape shape = eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
-
-        BlockState rail = Blocks.RAIL.defaultBlockState()
-                .setValue(RailBlock.SHAPE, shape);
-
-        level.setBlock(a, rail, Block.UPDATE_ALL);
-        level.setBlock(b, rail, Block.UPDATE_ALL);
-    }
 
     public static BlockPos generateForwardSpacer(
             ServerLevel level,
@@ -142,71 +132,8 @@ public class CodeRailTunnelBuilder {
         }
     }
 
-    public static void generateSafeConnector(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
-        if (startRailPos.getY() != endRailPos.getY()) {
-            throw new IllegalStateException(
-                    "Rail connector Y mismatch: start=" + startRailPos + " end=" + endRailPos
-            );
-        }
 
-        List<BlockPos> path = new ArrayList<>();
 
-        BlockPos current = startRailPos;
-        path.add(current);
-
-        while (current.getX() != endRailPos.getX()) {
-            int step = Integer.compare(endRailPos.getX(), current.getX());
-            current = current.offset(step, 0, 0);
-            path.add(current);
-        }
-
-        while (current.getZ() != endRailPos.getZ()) {
-            int step = Integer.compare(endRailPos.getZ(), current.getZ());
-            current = current.offset(0, 0, step);
-            path.add(current);
-        }
-
-        for (int i = 1; i < path.size() - 1; i++) {
-            carveTunnelCell(level, path.get(i));
-        }
-
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos pos = path.get(i);
-
-            boolean eastWest = i + 1 < path.size()
-                    ? path.get(i + 1).getX() != pos.getX()
-                    : i > 0 && path.get(i - 1).getX() != pos.getX();
-
-            placeRail(level, pos, i, eastWest);
-
-            System.out.println(
-                    "[PollutedWorld] Rail="
-                            + pos
-            );
-        }
-        System.out.println(
-                "[PollutedWorld] Connector start="
-                        + startRailPos
-                        + " end="
-                        + endRailPos
-                        + " length="
-                        + path.size()
-        );
-    }
-    public static void generateSafeConnectorExtended(
-            ServerLevel level,
-            BlockPos startRailPos,
-            BlockPos endRailPos,
-            int extra
-    ) {
-        Direction startToEnd = directionFromTo(startRailPos, endRailPos);
-        Direction endToStart = directionFromTo(endRailPos, startRailPos);
-
-        BlockPos fixedStart = startRailPos.relative(endToStart, extra);
-        BlockPos fixedEnd = endRailPos.relative(startToEnd, extra);
-
-        generateSafeConnector(level, fixedStart, fixedEnd);
-    }
 
     private static Direction directionFromTo(BlockPos from, BlockPos to) {
         int dx = Integer.compare(to.getX(), from.getX());
@@ -220,57 +147,6 @@ public class CodeRailTunnelBuilder {
         return Direction.NORTH;
     }
 
-    public static void generateDebugConnector(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
-        if (startRailPos.getY() != endRailPos.getY()) {
-            throw new IllegalStateException("Y mismatch: " + startRailPos + " -> " + endRailPos);
-        }
-
-        List<BlockPos> path = new ArrayList<>();
-
-        BlockPos current = startRailPos;
-        path.add(current);
-
-        while (current.getX() != endRailPos.getX()) {
-            int step = Integer.compare(endRailPos.getX(), current.getX());
-            current = current.offset(step, 0, 0);
-            path.add(current);
-        }
-
-        while (current.getZ() != endRailPos.getZ()) {
-            int step = Integer.compare(endRailPos.getZ(), current.getZ());
-            current = current.offset(0, 0, step);
-            path.add(current);
-        }
-
-        // 1. 先に全部掘る
-        for (BlockPos pos : path) {
-            carveTunnelCell(level, pos);
-        }
-
-        // 2. 掘り終わってから中央床だけ目印にする
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos pos = path.get(i);
-
-            if (i % 12 == 0) {
-                level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
-            } else {
-                level.setBlock(pos.below(), Blocks.SMOOTH_STONE.defaultBlockState(), Block.UPDATE_ALL);
-            }
-        }
-
-        // 3. 最後に目印床の上へレール
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos prev = i > 0 ? path.get(i - 1) : null;
-            BlockPos pos = path.get(i);
-            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
-
-            placeRailByMarker(level, prev, pos, next);
-        }
-
-        System.out.println("[PollutedWorld] DebugConnector start=" + startRailPos
-                + " end=" + endRailPos
-                + " length=" + path.size());
-    }
 
     private static void placeRailByMarker(ServerLevel level, BlockPos prev, BlockPos pos, BlockPos next) {
         BlockState floor = level.getBlockState(pos.below());
@@ -279,22 +155,22 @@ public class CodeRailTunnelBuilder {
             return;
         }
 
-        boolean eastWest;
+        BlockPos fixedPrev = prev;
+        BlockPos fixedNext = next;
 
-        if (next != null) {
-            eastWest = next.getX() != pos.getX();
-        } else if (prev != null) {
-            eastWest = prev.getX() != pos.getX();
-        } else {
-            eastWest = false;
+        if (fixedPrev == null) {
+            fixedPrev = findAdjacentRail(level, pos, fixedNext);
         }
 
-        RailShape shape = eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+        if (fixedNext == null) {
+            fixedNext = findAdjacentRail(level, pos, fixedPrev);
+        }
 
-        // 端は必ず通常レールにする
+        RailShape shape = getRailShape(fixedPrev, pos, fixedNext);
+
         boolean endpoint = prev == null || next == null;
 
-        if (!endpoint && floor.is(Blocks.REDSTONE_BLOCK)) {
+        if (!endpoint && floor.is(Blocks.REDSTONE_BLOCK) && isStraight(shape)) {
             BlockState poweredRail = Blocks.POWERED_RAIL.defaultBlockState()
                     .setValue(PoweredRailBlock.SHAPE, shape)
                     .setValue(PoweredRailBlock.POWERED, true);
@@ -308,57 +184,80 @@ public class CodeRailTunnelBuilder {
         }
     }
 
-    private static final int CONNECTOR_LEAD = 8;
+    private static BlockPos findAdjacentRail(ServerLevel level, BlockPos pos, BlockPos ignore) {
+        BlockPos[] candidates = new BlockPos[] {
+                pos.north(),
+                pos.south(),
+                pos.east(),
+                pos.west()
+        };
 
-    public static void generateFlatConnector(ServerLevel level, BlockPos startRailPos, BlockPos endRailPos) {
-        if (startRailPos.getY() != endRailPos.getY()) {
-            throw new IllegalStateException("Y mismatch: " + startRailPos + " -> " + endRailPos);
-        }
+        for (BlockPos candidate : candidates) {
+            if (ignore != null && candidate.equals(ignore)) {
+                continue;
+            }
 
-        List<BlockPos> path = new ArrayList<>();
+            BlockState state = level.getBlockState(candidate);
 
-        Direction mainForward = getMainZDirection(startRailPos, endRailPos);
-
-        BlockPos startLead = startRailPos.relative(mainForward, CONNECTOR_LEAD);
-        BlockPos endLead = endRailPos.relative(mainForward.getOpposite(), CONNECTOR_LEAD);
-
-        BlockPos current = startRailPos;
-        addUnique(path, current);
-
-        current = lineZ(path, current, startLead.getZ());
-        current = lineX(path, current, endLead.getX());
-        current = lineZ(path, current, endLead.getZ());
-        current = lineX(path, current, endRailPos.getX());
-        lineZ(path, current, endRailPos.getZ());
-
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos prev = i > 0 ? path.get(i - 1) : null;
-            BlockPos pos = path.get(i);
-            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
-
-            Direction forward = getForwardDirection(prev, pos, next);
-            carveFlatTunnelSlice(level, pos, forward);
-        }
-
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos pos = path.get(i);
-            boolean endpoint = i == 0 || i == path.size() - 1;
-
-            if (!endpoint && i % 12 == 0) {
-                level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
-            } else {
-                level.setBlock(pos.below(), Blocks.SMOOTH_STONE.defaultBlockState(), Block.UPDATE_ALL);
+            if (state.is(Blocks.RAIL) || state.is(Blocks.POWERED_RAIL)) {
+                return candidate;
             }
         }
 
-        for (int i = 0; i < path.size(); i++) {
-            BlockPos prev = i > 0 ? path.get(i - 1) : null;
-            BlockPos pos = path.get(i);
-            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
-
-            placeRailByMarker(level, prev, pos, next);
-        }
+        return null;
     }
+
+    private static RailShape getRailShape(BlockPos prev, BlockPos pos, BlockPos next) {
+        if (prev == null || next == null) {
+            boolean eastWest = next != null
+                    ? next.getX() != pos.getX()
+                    : prev != null && prev.getX() != pos.getX();
+
+            return eastWest ? RailShape.EAST_WEST : RailShape.NORTH_SOUTH;
+        }
+
+        int dx1 = Integer.compare(prev.getX() - pos.getX(), 0);
+        int dz1 = Integer.compare(prev.getZ() - pos.getZ(), 0);
+        int dx2 = Integer.compare(next.getX() - pos.getX(), 0);
+        int dz2 = Integer.compare(next.getZ() - pos.getZ(), 0);
+
+        boolean hasEast = dx1 > 0 || dx2 > 0;
+        boolean hasWest = dx1 < 0 || dx2 < 0;
+        boolean hasSouth = dz1 > 0 || dz2 > 0;
+        boolean hasNorth = dz1 < 0 || dz2 < 0;
+
+        if (hasEast && hasWest) {
+            return RailShape.EAST_WEST;
+        }
+
+        if (hasNorth && hasSouth) {
+            return RailShape.NORTH_SOUTH;
+        }
+
+        if (hasSouth && hasEast) {
+            return RailShape.SOUTH_EAST;
+        }
+
+        if (hasSouth && hasWest) {
+            return RailShape.SOUTH_WEST;
+        }
+
+        if (hasNorth && hasEast) {
+            return RailShape.NORTH_EAST;
+        }
+
+        if (hasNorth && hasWest) {
+            return RailShape.NORTH_WEST;
+        }
+
+        return RailShape.NORTH_SOUTH;
+    }
+
+    private static boolean isStraight(RailShape shape) {
+        return shape == RailShape.EAST_WEST
+                || shape == RailShape.NORTH_SOUTH;
+    }
+
 
     private static void addUnique(List<BlockPos> path, BlockPos pos) {
         if (path.isEmpty() || !path.get(path.size() - 1).equals(pos)) {
@@ -428,6 +327,171 @@ public class CodeRailTunnelBuilder {
         }
 
         return Direction.NORTH;
+    }
+
+
+
+
+
+    public static void generateSeparatedLaneConnectors(
+            ServerLevel level,
+            BlockPos westStart,
+            BlockPos westEnd,
+            BlockPos eastStart,
+            BlockPos eastEnd,
+            int sideOffset
+    ) {
+        if (westStart.getY() != westEnd.getY()
+                || eastStart.getY() != eastEnd.getY()
+                || westStart.getY() != eastStart.getY()) {
+            throw new IllegalStateException(
+                    "Lane connector Y mismatch: "
+                            + westStart + " -> " + westEnd
+                            + " / "
+                            + eastStart + " -> " + eastEnd
+            );
+        }
+
+        int westMaxX = Math.max(westStart.getX(), westEnd.getX());
+        int eastMinX = Math.min(eastStart.getX(), eastEnd.getX());
+
+
+        int dividerX;
+
+        if (westEnd.getX() < eastEnd.getX()) {
+            dividerX = (westEnd.getX() + eastEnd.getX()) / 2;
+        } else if (westStart.getX() < eastStart.getX()) {
+            dividerX = (westStart.getX() + eastStart.getX()) / 2;
+        } else {
+            dividerX = (Math.min(westStart.getX(), westEnd.getX())
+                    + Math.max(eastStart.getX(), eastEnd.getX())) / 2;
+        }
+
+        int westRouteX = Math.min(westStart.getX(), westEnd.getX()) - sideOffset;
+        int eastRouteX = Math.max(eastStart.getX(), eastEnd.getX()) + sideOffset;
+
+        generateDividerSafePath(
+                level,
+                westStart,
+                westEnd,
+                westRouteX,
+                dividerX,
+                true
+        );
+
+        generateDividerSafePath(
+                level,
+                eastStart,
+                eastEnd,
+                eastRouteX,
+                dividerX,
+                false
+        );
+
+        System.out.println(
+                "[PollutedWorld] Separated lane connectors"
+                        + " dividerX=" + dividerX
+                        + " westRouteX=" + westRouteX
+                        + " eastRouteX=" + eastRouteX
+        );
+    }
+
+    private static void generateDividerSafePath(
+            ServerLevel level,
+            BlockPos start,
+            BlockPos end,
+            int routeX,
+            int dividerX,
+            boolean westLane
+    ) {
+        if (westLane && routeX >= dividerX) {
+            throw new IllegalStateException("West route crosses divider: routeX=" + routeX + " dividerX=" + dividerX);
+        }
+
+        if (!westLane && routeX <= dividerX) {
+            throw new IllegalStateException("East route crosses divider: routeX=" + routeX + " dividerX=" + dividerX);
+        }
+
+        List<BlockPos> path = new ArrayList<>();
+
+        BlockPos current = start;
+        addUnique(path, current);
+
+        current = lineX(path, current, routeX);
+        current = lineZ(path, current, end.getZ());
+        lineX(path, current, end.getX());
+
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos prev = i > 0 ? path.get(i - 1) : null;
+            BlockPos pos = path.get(i);
+            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
+
+            Direction forward = getForwardDirection(prev, pos, next);
+            carveFlatTunnelSlice(level, pos, forward);
+        }
+
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos pos = path.get(i);
+            boolean endpoint = i == 0 || i == path.size() - 1;
+
+            if (!endpoint && i % 12 == 0) {
+                level.setBlock(pos.below(), Blocks.REDSTONE_BLOCK.defaultBlockState(), Block.UPDATE_ALL);
+            } else {
+                level.setBlock(pos.below(), Blocks.SMOOTH_STONE.defaultBlockState(), Block.UPDATE_ALL);
+            }
+        }
+
+        for (int i = 0; i < path.size(); i++) {
+            BlockPos prev = i > 0 ? path.get(i - 1) : null;
+            BlockPos pos = path.get(i);
+            BlockPos next = i + 1 < path.size() ? path.get(i + 1) : null;
+
+            placeRailByMarker(level, prev, pos, next);
+        }
+    }
+
+    public static void debugDrawDividerLine(
+            ServerLevel level,
+            BlockPos westA,
+            BlockPos westB,
+            BlockPos eastA,
+            BlockPos eastB
+    ) {
+        int dividerX = (
+                Math.max(westA.getX(), westB.getX())
+                        + Math.min(eastA.getX(), eastB.getX())
+        ) / 2;
+
+        int minZ = Math.min(
+                Math.min(westA.getZ(), westB.getZ()),
+                Math.min(eastA.getZ(), eastB.getZ())
+        );
+
+        int maxZ = Math.max(
+                Math.max(westA.getZ(), westB.getZ()),
+                Math.max(eastA.getZ(), eastB.getZ())
+        );
+
+        int y = westA.getY();
+
+        for (int z = minZ - 32; z <= maxZ + 32; z++) {
+            level.setBlock(
+                    new BlockPos(dividerX, y, z),
+                    Blocks.RED_CONCRETE.defaultBlockState(),
+                    Block.UPDATE_ALL
+            );
+        }
+
+        System.out.println(
+                "[PollutedWorld] Debug divider line"
+                        + " x=" + dividerX
+                        + " z=" + (minZ - 32) + " -> " + (maxZ + 32)
+                        + " y=" + y
+                        + " westA=" + westA
+                        + " westB=" + westB
+                        + " eastA=" + eastA
+                        + " eastB=" + eastB
+        );
     }
 
 

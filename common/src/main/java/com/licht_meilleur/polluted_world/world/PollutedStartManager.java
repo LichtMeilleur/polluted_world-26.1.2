@@ -20,13 +20,13 @@ public class PollutedStartManager {
             TRIED_PLAYERS.add(player.getUUID());
 
             try {
-                PollutedStructurePlacer.placeTwoStationNetworkOnSurface(
+                PollutedStructurePlacer.placeUnitChainOnSurface(
                         player.level(),
                         player,
                         player.blockPosition()
                 );
             } catch (Exception e) {
-                System.out.println("[PollutedWorld] Start generation skipped: " + e.getMessage());
+                System.out.println("[PollutedWorld] Start unit chain generation skipped: " + e.getMessage());
             }
         }
     }

@@ -1,7 +1,7 @@
 {
-  "has_precipitation": true,
+  "has_precipitation": false,
   "temperature": 0.0,
-  "downfall": 0.8,
+  "downfall": 0.0,
   "effects": {
     "sky_color": 7368816,
     "fog_color": 7829367,
@@ -26,8 +26,6 @@
     [
       "minecraft:patch_dead_bush"
     ],
-    [
-      "minecraft:freeze_top_layer"
-    ]
+    []
   ]
 }
