@@ -1,6 +1,7 @@
 package com.licht_meilleur.polluted_world;
 
 import com.licht_meilleur.polluted_world.command.PollutedWorldCommands;
+import com.licht_meilleur.polluted_world.pollution.SurfacePollutionQueue;
 import com.licht_meilleur.polluted_world.registry.ModItems;
 import com.licht_meilleur.polluted_world.registry.fabric.FabricItemGroups;
 import com.licht_meilleur.polluted_world.pollution.PollutionLogic;
@@ -25,17 +26,15 @@ public class PollutedWorldFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         System.out.println("[PollutedWorld] Fabric init");
+
+
 /*
-        ServerChunkEvents.CHUNK_LOAD.register((serverLevel, worldChunk, generated) -> {
-            if (!generated) {
+        ServerChunkEvents.CHUNK_LOAD.register((level, chunk, generated) -> {
+            if (!(chunk instanceof LevelChunk levelChunk)) {
                 return;
             }
 
-            if (!(worldChunk instanceof LevelChunk chunk)) {
-                return;
-            }
-
-            SurfacePollutionTransformer.transformChunk(serverLevel, chunk);
+            SurfacePollutionQueue.enqueue(level, levelChunk);
         });
 
  */
@@ -58,6 +57,7 @@ public class PollutedWorldFabric implements ModInitializer {
 
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             PollutedStartManager.tick(server);
+            //SurfacePollutionQueue.tick();
 
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 PollutionLogic.tickPlayer(player);

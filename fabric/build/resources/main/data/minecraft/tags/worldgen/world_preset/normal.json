@@ -1,0 +1,10 @@
+{
+  "replace": false,
+  "values": [
+    "minecraft:normal",
+    {
+      "id": "minecraft:polluted_world",
+      "required": false
+    }
+  ]
+}

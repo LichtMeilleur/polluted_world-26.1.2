@@ -8,7 +8,7 @@
           "type": "minecraft:fixed",
           "biome": "polluted_world:polluted_dead_forest"
         },
-        "settings": "polluted_world:polluted_overworld"
+        "settings": "polluted_world:polluted_overworld_simple"
       }
     },
     "minecraft:the_end": {

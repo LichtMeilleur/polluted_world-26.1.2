@@ -17,16 +17,16 @@ public class PollutedRegion extends Region {
         super(PollutedWorldMod.id("polluted_region"), RegionType.OVERWORLD, 600);
     }
 
+
     @Override
     public void addBiomes(
             Registry<Biome> registry,
             Consumer<Pair<Climate.ParameterPoint, ResourceKey<Biome>>> mapper
     ) {
-
-        // 汚染雪原
+        // 汚染雪原：寒冷域メイン
         addBiome(
                 mapper,
-                Climate.Parameter.span(-1.0F, -0.05F),
+                Climate.Parameter.span(-1.0F, -0.35F),
                 Climate.Parameter.span(-1.0F, 1.0F),
                 Climate.Parameter.span(-1.0F, 1.0F),
                 Climate.Parameter.span(-1.0F, 1.0F),
@@ -34,10 +34,10 @@ public class PollutedRegion extends Region {
                 ModBiomes.POLLUTED_SNOWFIELD
         );
 
-        // 汚染枯れ森（メイン）
+        // 汚染枯れ森：通常域メイン
         addBiome(
                 mapper,
-                Climate.Parameter.span(-0.04F, 1.0F),
+                Climate.Parameter.span(-0.34F, 1.0F),
                 Climate.Parameter.span(-1.0F, 1.0F),
                 Climate.Parameter.span(-1.0F, 1.0F),
                 Climate.Parameter.span(-1.0F, 1.0F),
@@ -45,14 +45,14 @@ public class PollutedRegion extends Region {
                 ModBiomes.POLLUTED_DEAD_FOREST
         );
 
-        // オアシス（確認用に今だけ広め）
+        // オアシス（テスト中は少し広め）
         addBiome(
                 mapper,
-                Climate.Parameter.span(0.20F, 1.0F),
-                Climate.Parameter.span(0.20F, 1.0F),
-                Climate.Parameter.span(-1.0F, 1.0F),
-                Climate.Parameter.span(-1.0F, 1.0F),
-                Climate.Parameter.span(-0.40F, 0.40F),
+                Climate.Parameter.span(0.30F, 1.0F),
+                Climate.Parameter.span(0.50F, 1.0F),
+                Climate.Parameter.span(-0.60F, 0.80F),
+                Climate.Parameter.span(-0.60F, 0.80F),
+                Climate.Parameter.span(-0.30F, 0.30F),
                 ModBiomes.CLEAN_OASIS
         );
     }

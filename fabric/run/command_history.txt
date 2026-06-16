@@ -36,3 +36,4 @@
 /time set
 /time set minecraft:day
 /polluted_place unit_chain
+/gamemode survival

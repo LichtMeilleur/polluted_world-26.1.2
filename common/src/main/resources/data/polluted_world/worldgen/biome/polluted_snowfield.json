@@ -1,7 +1,7 @@
 {
-  "has_precipitation": false,
+  "has_precipitation": true,
   "temperature": 0.0,
-  "downfall": 0.0,
+  "downfall": 0.8,
   "effects": {
     "sky_color": 7368816,
     "fog_color": 7829367,
@@ -20,7 +20,19 @@
     [],
     [],
     [],
-    [],
+    ["minecraft:ore_dirt",
+      "minecraft:ore_gravel",
+      "minecraft:ore_coal_upper",
+      "minecraft:ore_coal_lower",
+      "minecraft:ore_iron_upper",
+      "minecraft:ore_iron_middle",
+      "minecraft:ore_iron_small",
+      "minecraft:ore_gold",
+      "minecraft:ore_redstone",
+      "minecraft:ore_diamond",
+      "minecraft:ore_lapis",
+      "minecraft:ore_copper"],
+
     [],
     [],
     [
