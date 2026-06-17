@@ -2,14 +2,15 @@ package com.licht_meilleur.polluted_world.pollution;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
 import com.licht_meilleur.polluted_world.world.ModBiomeTags;
+import com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.monster.Monster;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +32,10 @@ public final class PollutionLogic {
         ServerLevel level = player.level();
 
         if (!level.dimension().equals(Level.OVERWORLD)) return;
+
+        if (player.tickCount % 10 == 0) {
+            protectSpawnedPollutedMobsFromSun(level, player.blockPosition());
+        }
 
         if (player.tickCount % 100 == 0) {
 
@@ -208,6 +213,20 @@ public final class PollutionLogic {
 
             if (mob.isOnFire()) {
                 mob.setRemainingFireTicks(0);
+            }
+        }
+    }
+
+    private static void protectSpawnedPollutedMobsFromSun(ServerLevel level, BlockPos center) {
+        AABB area = new AABB(center).inflate(96.0D, 64.0D, 96.0D);
+
+        for (Entity entity : level.getEntities(null, area)) {
+            if (!entity.entityTags().contains(PollutedSpawnMarkerProcessor.NO_SUN_BURN_TAG)) {
+                continue;
+            }
+
+            if (entity.isOnFire()) {
+                entity.setRemainingFireTicks(0);
             }
         }
     }

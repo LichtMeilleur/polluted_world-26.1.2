@@ -45,14 +45,14 @@ public class PollutedRegion extends Region {
                 ModBiomes.POLLUTED_DEAD_FOREST
         );
 
-        // オアシス（テスト中は少し広め）
+        // オアシス：かなりレア
         addBiome(
                 mapper,
-                Climate.Parameter.span(0.30F, 1.0F),
-                Climate.Parameter.span(0.50F, 1.0F),
-                Climate.Parameter.span(-0.60F, 0.80F),
-                Climate.Parameter.span(-0.60F, 0.80F),
-                Climate.Parameter.span(-0.30F, 0.30F),
+                Climate.Parameter.span(0.65F, 1.0F),    // 暑い// temperature 温度
+                Climate.Parameter.span(0.75F, 1.0F),    // 湿った// humidity 湿度
+                Climate.Parameter.span(-0.20F, 0.35F),  // continentalness 大陸性
+                Climate.Parameter.span(-0.25F, 0.25F),  // erosion 侵食
+                Climate.Parameter.span(0.55F, 1.0F),    // weirdness 変則性
                 ModBiomes.CLEAN_OASIS
         );
     }

@@ -22,6 +22,11 @@ public class StationRegistry {
                     "station_entrance_03",
                     "station_village_03",
                     100
+            ),
+            new StationDefinition(
+                    "station_entrance_04",
+                    "station_village_04",
+                    100
             )
     );
 }

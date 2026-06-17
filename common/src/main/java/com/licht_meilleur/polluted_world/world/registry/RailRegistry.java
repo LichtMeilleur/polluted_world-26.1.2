@@ -24,6 +24,18 @@ public class RailRegistry {
                     "collapsed_rail",
                     false,
                     20
+            ),
+
+            new RailDefinition(
+                    "trains_graveyard",
+                    false,
+                    20
+            ),
+
+        new RailDefinition(
+                    "flooded_collapse_rail",
+                    false,
+                    10
             )
     );
 }

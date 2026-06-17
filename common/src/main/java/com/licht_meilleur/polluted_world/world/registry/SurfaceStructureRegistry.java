@@ -8,7 +8,12 @@ public class SurfaceStructureRegistry {
 
     public static final List<SurfaceStructureDefinition> ALL = List.of(
             new SurfaceStructureDefinition(
-                    "ruined_house_01",
+                    "church",
+                    "polluted_world:surface_anchor",
+                    20
+            ),
+            new SurfaceStructureDefinition(
+                    "broken_church",
                     "polluted_world:surface_anchor",
                     100
             )

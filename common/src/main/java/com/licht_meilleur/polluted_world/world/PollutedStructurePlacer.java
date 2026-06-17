@@ -168,7 +168,9 @@ public class PollutedStructurePlacer {
             throw new IllegalStateException("Failed to place structure: " + structureName);
         }
 
-        return new StructureNode(
+        return com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor.processAndReturn(
+                level,
+                new StructureNode(
                 structureName,
                 template,
                 origin,
@@ -176,6 +178,7 @@ public class PollutedStructurePlacer {
                 template.getSize(),
                 jigsaws,
                 barriers
+            )
         );
     }
 
