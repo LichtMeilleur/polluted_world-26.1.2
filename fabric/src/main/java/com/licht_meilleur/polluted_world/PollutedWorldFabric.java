@@ -6,8 +6,10 @@ import com.licht_meilleur.polluted_world.registry.ModItems;
 import com.licht_meilleur.polluted_world.registry.fabric.FabricItemGroups;
 import com.licht_meilleur.polluted_world.pollution.PollutionLogic;
 import com.licht_meilleur.polluted_world.world.PollutedStartManager;
+import com.licht_meilleur.polluted_world.world.spawn.PollutedSurfaceMobSpawner;
 import com.licht_meilleur.polluted_world.worldgen.ModFeatures;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.api.ModInitializer;
 import net.minecraft.core.Registry;
@@ -28,17 +30,6 @@ public class PollutedWorldFabric implements ModInitializer {
         System.out.println("[PollutedWorld] Fabric init");
 
 
-/*
-        ServerChunkEvents.CHUNK_LOAD.register((level, chunk, generated) -> {
-            if (!(chunk instanceof LevelChunk levelChunk)) {
-                return;
-            }
-
-            SurfacePollutionQueue.enqueue(level, levelChunk);
-        });
-
- */
-
         CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
             PollutedWorldCommands.register(dispatcher);
         });
@@ -55,12 +46,16 @@ public class PollutedWorldFabric implements ModInitializer {
 
         PollutedWorldMod.init();
 
+
+
         ServerTickEvents.END_SERVER_TICK.register(server -> {
             PollutedStartManager.tick(server);
             //SurfacePollutionQueue.tick();
 
             for (ServerPlayer player : server.getPlayerList().getPlayers()) {
                 PollutionLogic.tickPlayer(player);
+                PollutedSurfaceMobSpawner.tick(player);
+
             }
         });
     }

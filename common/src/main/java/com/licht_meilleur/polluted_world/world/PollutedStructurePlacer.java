@@ -20,6 +20,8 @@ import java.util.Optional;
 public class PollutedStructurePlacer {
 
 
+    private static final int SURFACE_BASE_Y = 60;
+
     public record PlaceResult(int jigsawMarkers, int barrierMarkers) {
     }
 
@@ -168,17 +170,19 @@ public class PollutedStructurePlacer {
             throw new IllegalStateException("Failed to place structure: " + structureName);
         }
 
+
+
         return com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor.processAndReturn(
                 level,
                 new StructureNode(
-                structureName,
-                template,
-                origin,
-                rotation,
-                template.getSize(),
-                jigsaws,
-                barriers
-            )
+                        structureName,
+                        template,
+                        origin,
+                        rotation,
+                        template.getSize(),
+                        jigsaws,
+                        barriers
+                )
         );
     }
 
@@ -230,7 +234,7 @@ public class PollutedStructurePlacer {
     ) {
         StructureTemplate entranceTemplate = load(level, "station_entrance_01");
 
-        BlockPos surfacePos = findFlatSurface(level, nearPos, 64, 96)
+        BlockPos surfacePos = findFlatSurface(level, nearPos, SURFACE_BASE_Y, 96)
                 .orElseThrow(() -> new IllegalStateException("No valid surface found near " + nearPos));
 
         BlockPos anchorLocalPos = getLocalMarkerPos(
@@ -245,12 +249,7 @@ public class PollutedStructurePlacer {
                 surfacePos.getZ() - anchorLocalPos.getZ()
         );
 
-        System.out.println(
-                "[PollutedWorld] Start unit chain surface="
-                        + surfacePos
-                        + " origin="
-                        + origin
-        );
+
 
         return UnitChainTestBuilder.place(level, player, origin);
     }
@@ -263,14 +262,23 @@ public class PollutedStructurePlacer {
                         continue;
                     }
 
-                    BlockPos ground = new BlockPos(
-                            center.getX() + dx,
-                            targetY,
-                            center.getZ() + dz
+                    int x = center.getX() + dx;
+                    int z = center.getZ() + dz;
+
+                    int y = level.getHeight(
+                            net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                            x,
+                            z
                     );
 
+                    BlockPos ground = new BlockPos(x, y - 1, z);
+
+                    if (Math.abs(ground.getY() - targetY) > 8) {
+                        continue;
+                    }
+
                     if (isValidSurfaceAnchor(level, ground)) {
-                        return Optional.of(ground.above());
+                        return Optional.of(ground);
                     }
                 }
             }
@@ -289,7 +297,7 @@ public class PollutedStructurePlacer {
         }
 
         // 駅・入口用に広めの平坦チェック
-        int checkRadius = 24;
+        int checkRadius = 12;
         int maxHeightDiff = 2;
 
         for (int dx = -checkRadius; dx <= checkRadius; dx += 4) {
@@ -315,7 +323,7 @@ public class PollutedStructurePlacer {
 
                 // 上空クリアランス
                 for (int y = 1; y <= 32; y++) {
-                    if (!level.getBlockState(sample.above(y)).isAir()) {
+                    if (!isReplaceableForStructure(level, sample.above(y))) {
                         return false;
                     }
                 }
@@ -323,6 +331,34 @@ public class PollutedStructurePlacer {
         }
 
         return true;
+    }
+
+    private static boolean isReplaceableForStructure(ServerLevel level, BlockPos pos) {
+        var state = level.getBlockState(pos);
+
+        return state.isAir()
+                || state.canBeReplaced()
+                || state.is(Blocks.DEAD_BUSH)
+                || state.is(Blocks.SHORT_GRASS)
+                || state.is(Blocks.TALL_GRASS);
+    }
+
+    private static void clearReplaceableBlocksInTemplateArea(
+            ServerLevel level,
+            BlockPos origin,
+            net.minecraft.core.Vec3i size
+    ) {
+        for (int x = 0; x < size.getX(); x++) {
+            for (int y = 0; y < size.getY(); y++) {
+                for (int z = 0; z < size.getZ(); z++) {
+                    BlockPos pos = origin.offset(x, y, z);
+
+                    if (isReplaceableForStructure(level, pos)) {
+                        level.removeBlock(pos, false);
+                    }
+                }
+            }
+        }
     }
 
     private static boolean isSolidDryGround(ServerLevel level, BlockPos pos) {
@@ -399,7 +435,7 @@ public class PollutedStructurePlacer {
 
         StructureTemplate template = load(level, definition.structureName());
 
-        BlockPos surfacePos = findFlatSurface(level, nearPos, 64, 96)
+        BlockPos surfacePos = findFlatSurface(level, nearPos, SURFACE_BASE_Y, 96)
                 .orElseThrow(() -> new IllegalStateException("No valid surface found near " + nearPos));
 
         BlockPos anchorLocalPos = getLocalMarkerPos(

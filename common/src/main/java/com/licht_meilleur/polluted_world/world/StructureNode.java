@@ -29,7 +29,7 @@ public record StructureNode(
     }
 
     public int minX() {
-        return origin.getX();
+        return Math.min(origin.getX(), origin.getX() - size.getX());
     }
 
     public int minY() {
@@ -37,11 +37,11 @@ public record StructureNode(
     }
 
     public int minZ() {
-        return origin.getZ();
+        return Math.min(origin.getZ(), origin.getZ() - size.getZ());
     }
 
     public int maxX() {
-        return origin.getX() + size.getX();
+        return Math.max(origin.getX() + size.getX(), origin.getX());
     }
 
     public int maxY() {
@@ -49,7 +49,7 @@ public record StructureNode(
     }
 
     public int maxZ() {
-        return origin.getZ() + size.getZ();
+        return Math.max(origin.getZ() + size.getZ(), origin.getZ());
     }
 
     public boolean intersects(BlockPos otherOrigin, Vec3i otherSize, int margin) {
@@ -108,5 +108,21 @@ public record StructureNode(
         }
 
         return info.nbt().getString("name").orElse("");
+    }
+
+    private int rotatedSizeX() {
+        if (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) {
+            return size.getZ();
+        }
+
+        return size.getX();
+    }
+
+    private int rotatedSizeZ() {
+        if (rotation == Rotation.CLOCKWISE_90 || rotation == Rotation.COUNTERCLOCKWISE_90) {
+            return size.getX();
+        }
+
+        return size.getZ();
     }
 }

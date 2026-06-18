@@ -1,4 +1,3 @@
-/give Player277 polluted_world:gas_mask
 /give Player870 polluted_world:filter
 /gamemode survival
 /gamemode creative
@@ -37,3 +36,15 @@
 /time set minecraft:day
 /polluted_place unit_chain
 /gamemode survival
+/polluted_place unit_chain
+/gamemode survival
+/gamemode creative
+/polluted_place unit_chain
+/gamemode survival
+/gamemode creative
+/gamemode survival
+/polluted_place unit_chain
+/polluted_place
+/polluted_place unit_chain
+/time set minecraft:day
+/polluted_place unit_chain

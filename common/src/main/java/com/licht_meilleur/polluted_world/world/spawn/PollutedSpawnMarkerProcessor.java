@@ -4,10 +4,10 @@ import com.licht_meilleur.polluted_world.world.StructureNode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.RandomSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntitySpawnReason;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.*;
+import net.minecraft.world.entity.monster.skeleton.AbstractSkeleton;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
 import java.util.List;
@@ -29,17 +29,69 @@ public final class PollutedSpawnMarkerProcessor {
             return;
         }
 
+
+
         for (StructureTemplate.StructureBlockInfo info : node.jigsaws()) {
             String marker = getMarkerName(info);
 
+
+
             if (isMarker(marker, "spawn_common")) {
-                spawnCommon(level, info.pos());
+                popcornSpawn(level, info.pos(), List.of(
+                        EntityType.ZOMBIE,
+                        EntityType.SKELETON,
+                        EntityType.SPIDER
+                ), 6);
             } else if (isMarker(marker, "spawn_aquatic")) {
-                spawnAquatic(level, info.pos());
+                popcornSpawn(level, info.pos(), List.of(
+                        EntityType.DROWNED
+                ), 4);
             } else if (isMarker(marker, "spawn_rare")) {
-                spawnRare(level, info.pos());
+                popcornSpawn(level, info.pos(), List.of(
+                        EntityType.WITCH,
+                        EntityType.ZOMBIE_VILLAGER
+                ), 3);
             }
         }
+    }
+
+    private static void popcornSpawn(
+            ServerLevel level,
+            BlockPos center,
+            List<EntityType<?>> types,
+            int count
+    ) {
+        RandomSource random = level.getRandom();
+
+        for (int i = 0; i < count; i++) {
+            EntityType<?> type = types.get(random.nextInt(types.size()));
+
+            BlockPos pos = center.offset(
+                    random.nextInt(7) - 3,
+                    0,
+                    random.nextInt(7) - 3
+            );
+
+            BlockPos spawnPos = findSpawnPos(level, pos);
+
+
+
+            spawn(level, spawnPos, type);
+        }
+    }
+
+    private static BlockPos findSpawnPos(ServerLevel level, BlockPos pos) {
+        for (int dy = -2; dy <= 4; dy++) {
+            BlockPos check = pos.above(dy);
+
+            if (level.getBlockState(check.below()).isSolid()
+                    && level.getBlockState(check).isAir()
+                    && level.getBlockState(check.above()).isAir()) {
+                return check;
+            }
+        }
+
+        return pos.above();
     }
 
     private static void spawnCommon(ServerLevel level, BlockPos pos) {
@@ -52,6 +104,8 @@ public final class PollutedSpawnMarkerProcessor {
                 EntityType.SKELETON,
                 EntityType.SPIDER
         );
+
+
 
         spawn(level, pos, types.get(random.nextInt(types.size())));
     }
@@ -79,11 +133,21 @@ public final class PollutedSpawnMarkerProcessor {
 
     private static void spawn(ServerLevel level, BlockPos pos, EntityType<?> type) {
         Entity entity = type.create(level, EntitySpawnReason.STRUCTURE);
+        if (entity == null) {
+
+            return;
+        }
+
+        BlockPos spawnPos = pos;
+
+        if (!level.getBlockState(spawnPos).isAir()) {
+            spawnPos = spawnPos.above();
+        }
 
         entity.snapTo(
-                pos.getX() + 0.5D,
-                pos.getY(),
-                pos.getZ() + 0.5D,
+                spawnPos.getX() + 0.5D,
+                spawnPos.getY(),
+                spawnPos.getZ() + 0.5D,
                 level.getRandom().nextFloat() * 360.0F,
                 0.0F
         );
@@ -92,9 +156,37 @@ public final class PollutedSpawnMarkerProcessor {
 
         if (entity instanceof Mob mob) {
             mob.setPersistenceRequired();
+            mob.finalizeSpawn(
+                    level,
+                    level.getCurrentDifficultyAt(spawnPos),
+                    EntitySpawnReason.STRUCTURE,
+                    null
+            );
         }
 
-        level.addFreshEntity(entity);
+        if (entity instanceof Mob mob) {
+            mob.setPersistenceRequired();
+
+            mob.finalizeSpawn(
+                    level,
+                    level.getCurrentDifficultyAt(spawnPos),
+                    EntitySpawnReason.STRUCTURE,
+                    null
+            );
+
+            equipSkeletonBow(mob);
+        }
+
+        boolean added = level.addFreshEntity(entity);
+
+
+
+    }
+
+    private static void equipSkeletonBow(Mob mob) {
+        if (mob instanceof AbstractSkeleton) {
+            mob.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
+        }
     }
 
     private static boolean isMarker(String marker, String target) {
@@ -107,6 +199,11 @@ public final class PollutedSpawnMarkerProcessor {
             return "";
         }
 
-        return info.nbt().getString("name").orElse("");
+        String name = info.nbt().getString("name").orElse("");
+        if (!name.isEmpty()) {
+            return name;
+        }
+
+        return info.nbt().getString("target").orElse("");
     }
 }

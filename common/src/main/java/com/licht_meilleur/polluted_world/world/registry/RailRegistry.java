@@ -8,11 +8,14 @@ public class RailRegistry {
 
     public static final List<RailDefinition> RAILS = List.of(
 
+            /*
             new RailDefinition(
                     "normal_rail",
                     false,
-                    50
+                    30
             ),
+
+             */
 
             new RailDefinition(
                     "rail_with_side_street",
@@ -21,7 +24,7 @@ public class RailRegistry {
             ),
 
             new RailDefinition(
-                    "collapsed_rail",
+                    "collapse_rail",
                     false,
                     20
             ),

@@ -82,7 +82,7 @@ public class SideDungeonLayoutTestBuilder {
 
             if (!collides) {
                 secondOrigin = candidate;
-                System.out.println("[PollutedWorld] Side layout selected gap=" + gap);
+
                 break;
             }
         }

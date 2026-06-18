@@ -388,12 +388,7 @@ public class CodeRailTunnelBuilder {
                 false
         );
 
-        System.out.println(
-                "[PollutedWorld] Separated lane connectors"
-                        + " dividerX=" + dividerX
-                        + " westRouteX=" + westRouteX
-                        + " eastRouteX=" + eastRouteX
-        );
+
     }
 
     private static void generateDividerSafePath(
@@ -482,16 +477,7 @@ public class CodeRailTunnelBuilder {
             );
         }
 
-        System.out.println(
-                "[PollutedWorld] Debug divider line"
-                        + " x=" + dividerX
-                        + " z=" + (minZ - 32) + " -> " + (maxZ + 32)
-                        + " y=" + y
-                        + " westA=" + westA
-                        + " westB=" + westB
-                        + " eastA=" + eastA
-                        + " eastB=" + eastB
-        );
+
     }
 
 

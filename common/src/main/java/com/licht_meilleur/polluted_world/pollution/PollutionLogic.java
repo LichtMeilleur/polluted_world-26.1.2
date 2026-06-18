@@ -33,9 +33,9 @@ public final class PollutionLogic {
 
         if (!level.dimension().equals(Level.OVERWORLD)) return;
 
-        if (player.tickCount % 10 == 0) {
-            protectSpawnedPollutedMobsFromSun(level, player.blockPosition());
-        }
+        // tickPlayer 内
+        protectSpawnedPollutedMobsFromSun(level, player.blockPosition());
+        protectSurfaceMonstersFromSun(level, player.blockPosition());
 
         if (player.tickCount % 100 == 0) {
 

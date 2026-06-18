@@ -1,9 +1,11 @@
 package com.licht_meilleur.polluted_world.world;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
+import com.licht_meilleur.polluted_world.world.definition.RailDefinition;
 import com.licht_meilleur.polluted_world.world.definition.SideDungeonDefinition;
 import com.licht_meilleur.polluted_world.world.definition.StationDefinition;
 import com.licht_meilleur.polluted_world.world.layout.UnitBounds;
+import com.licht_meilleur.polluted_world.world.registry.RailRegistry;
 import com.licht_meilleur.polluted_world.world.registry.SideDungeonRegistry;
 import com.licht_meilleur.polluted_world.world.registry.StationRegistry;
 import com.licht_meilleur.polluted_world.world.registry.WeightedPicker;
@@ -25,8 +27,8 @@ import java.util.Optional;
 
 public class UnitChainTestBuilder {
 
-    private static final int STATION_MARGIN = 32;
-    private static final int MIDDLE_RAIL_PAIR_MARGIN = 8;
+    private static final int STATION_MARGIN = 64;
+    private static final int MIDDLE_RAIL_PAIR_MARGIN = 32;
     private static final int SEARCH_STEP_X = 16;
     private static final int SEARCH_STEP_Z = 32;
     private static final int MAX_X_ATTEMPTS = 12;
@@ -44,12 +46,19 @@ public class UnitChainTestBuilder {
         List<StructureNode> nodes = new ArrayList<>();
         List<UnitBounds> units = new ArrayList<>();
         List<StationDefinition> stationDeck = createStationDeck();
+        List<RailDefinition> railDeck = createRailDeck(level);
+        List<SideDungeonDefinition> westDungeonDeck = new ArrayList<>(SideDungeonRegistry.west());
+        List<SideDungeonDefinition> eastDungeonDeck = new ArrayList<>(SideDungeonRegistry.east());
 
         StructureTemplate railGateTemplate = load(level, "rail_gate");
+        StructureTemplate railEndTemplate = load(level, "rail_end");
         StructureTemplate normalRailTemplate = load(level, "normal_rail");
 
         StationDefinition startStationDef = StationRegistry.START_STATION;
 
+
+
+        // スタート駅：前はない、先はある
         StationUnit currentStation = placeStationUnit(
                 level,
                 nodes,
@@ -59,7 +68,10 @@ public class UnitChainTestBuilder {
                 startStationDef.villageName(),
                 load(level, startStationDef.villageName()),
                 railGateTemplate,
-                normalRailTemplate
+                railEndTemplate,
+                normalRailTemplate,
+                false,
+                true
         );
 
         units.add(currentStation.bounds("station_start", STATION_MARGIN));
@@ -75,7 +87,14 @@ public class UnitChainTestBuilder {
         while (!stationDeck.isEmpty()) {
             StationDefinition nextStationDef = drawStationFromDeck(level, stationDeck);
 
-            MiddleRailPairPlan middlePlan = randomMiddleRailPairPlan(level);
+            boolean hasNextStation = !stationDeck.isEmpty();
+
+            MiddleRailPairPlan middlePlan = drawMiddleRailPairPlan(
+                    level,
+                    railDeck,
+                    westDungeonDeck,
+                    eastDungeonDeck
+            );
 
             BlockPos pairStart = new BlockPos(
                     currentStation.westOutConnect().getX(),
@@ -139,7 +158,10 @@ public class UnitChainTestBuilder {
                     nextStationDef.villageName(),
                     nextVillageTemplate,
                     railGateTemplate,
-                    normalRailTemplate
+                    railEndTemplate,
+                    normalRailTemplate,
+                    true,
+                    hasNextStation
             );
 
             units.add(nextStation.bounds("station_" + stationIndex, STATION_MARGIN));
@@ -166,6 +188,9 @@ public class UnitChainTestBuilder {
             stationIndex++;
         }
 
+        placeSurfaceRuinsAroundSurfaceAnchors(level, nodes, units);
+        placeFarSurfaceRuins(level, nodes, units, origin);
+
         int barrierCount = nodes.stream()
                 .mapToInt(StructureNode::barrierCount)
                 .sum();
@@ -180,6 +205,8 @@ public class UnitChainTestBuilder {
                 teleported
         );
     }
+
+
 
     private record StationUnit(
             StructureNode entrance,
@@ -245,8 +272,11 @@ public class UnitChainTestBuilder {
             String villageName,
             StructureTemplate villageTemplate,
             StructureTemplate railGateTemplate,
-            StructureTemplate normalRailTemplate
-    ) {
+            StructureTemplate railEndTemplate,
+            StructureTemplate normalRailTemplate,
+            boolean hasPreviousStation,
+            boolean hasNextStation
+    ){
         List<StructureNode> unitNodes = new ArrayList<>();
 
         StructureNode entrance = placeAt(
@@ -278,7 +308,10 @@ public class UnitChainTestBuilder {
                 "polluted_world:west_up",
                 "polluted_world:west_down",
                 railGateTemplate,
-                normalRailTemplate
+                railEndTemplate,
+                normalRailTemplate,
+                hasPreviousStation,
+                hasNextStation
         );
 
         LaneEnds east = buildStationLaneEnds(
@@ -289,7 +322,10 @@ public class UnitChainTestBuilder {
                 "polluted_world:east_up",
                 "polluted_world:east_down",
                 railGateTemplate,
-                normalRailTemplate
+                railEndTemplate,
+                normalRailTemplate,
+                hasPreviousStation,
+                hasNextStation
         );
 
         LaneEnds physicalWest;
@@ -303,13 +339,7 @@ public class UnitChainTestBuilder {
             physicalEast = west;
         }
 
-        System.out.println(
-                "[PollutedWorld] Station physical lanes"
-                        + " westIn=" + physicalWest.inConnect()
-                        + " westOut=" + physicalWest.outConnect()
-                        + " eastIn=" + physicalEast.inConnect()
-                        + " eastOut=" + physicalEast.outConnect()
-        );
+
 
         return new StationUnit(
                 entrance,
@@ -330,81 +360,119 @@ public class UnitChainTestBuilder {
             String upMarker,
             String downMarker,
             StructureTemplate railGateTemplate,
-            StructureTemplate normalRailTemplate
+            StructureTemplate railEndTemplate,
+            StructureTemplate normalRailTemplate,
+            boolean hasPreviousStation,
+            boolean hasNextStation
     ) {
-        StructureNode upGate = placeConnectedAbsolute(
-                level,
-                "rail_gate",
-                railGateTemplate,
-                "polluted_world:rail_gate",
-                village.marker(upMarker),
-                Rotation.CLOCKWISE_180
-        );
-        nodes.add(upGate);
-        unitNodes.add(upGate);
+        BlockPos inConnect;
+        BlockPos outConnect;
 
-        BlockPos nextConnect = upGate.marker("polluted_world:rail");
-
-        for (int i = 0; i < NORMAL_RAILS_FROM_STATION; i++) {
-            StructureNode rail = placeConnectedAbsolute(
+        if (hasPreviousStation) {
+            StructureNode downGate = placeConnectedAbsolute(
                     level,
-                    "normal_rail",
-                    normalRailTemplate,
-                    "polluted_world:rail_in",
-                    nextConnect,
-                    Rotation.CLOCKWISE_180
+                    "rail_gate",
+                    railGateTemplate,
+                    "polluted_world:rail_gate",
+                    village.marker(downMarker),
+                    Rotation.NONE
             );
-            nodes.add(rail);
-            unitNodes.add(rail);
+            nodes.add(downGate);
+            unitNodes.add(downGate);
 
-            nextConnect = rail.marker("polluted_world:rail_out");
+            inConnect = downGate.marker("polluted_world:rail");
+        } else {
+            StructureNode end = placeConnectedAbsolute(
+                    level,
+                    "rail_end",
+                    railEndTemplate,
+                    "polluted_world:rail_in",
+                    village.marker(downMarker),
+                    Rotation.NONE
+            );
+            nodes.add(end);
+            unitNodes.add(end);
+
+            inConnect = village.marker(downMarker);
         }
 
-        StructureNode downGate = placeConnectedAbsolute(
-                level,
-                "rail_gate",
-                railGateTemplate,
-                "polluted_world:rail_gate",
-                village.marker(downMarker),
-                Rotation.NONE
-        );
-        nodes.add(downGate);
-        unitNodes.add(downGate);
+        if (hasNextStation) {
+            StructureNode upGate = placeConnectedAbsolute(
+                    level,
+                    "rail_gate",
+                    railGateTemplate,
+                    "polluted_world:rail_gate",
+                    village.marker(upMarker),
+                    Rotation.CLOCKWISE_180
+            );
+            nodes.add(upGate);
+            unitNodes.add(upGate);
 
-        return new LaneEnds(
-                downGate.marker("polluted_world:rail"),
-                nextConnect
-        );
+            BlockPos nextConnect = upGate.marker("polluted_world:rail");
+
+            for (int i = 0; i < NORMAL_RAILS_FROM_STATION; i++) {
+                StructureNode rail = placeConnectedAbsolute(
+                        level,
+                        "normal_rail",
+                        normalRailTemplate,
+                        "polluted_world:rail_in",
+                        nextConnect,
+                        Rotation.CLOCKWISE_180
+                );
+                nodes.add(rail);
+                unitNodes.add(rail);
+
+                nextConnect = rail.marker("polluted_world:rail_out");
+            }
+
+            outConnect = nextConnect;
+        } else {
+            StructureNode end = placeConnectedAbsolute(
+                    level,
+                    "rail_end",
+                    railEndTemplate,
+                    "polluted_world:rail_in",
+                    village.marker(upMarker),
+                    Rotation.CLOCKWISE_180
+            );
+            nodes.add(end);
+            unitNodes.add(end);
+
+            outConnect = village.marker(upMarker);
+        }
+
+        return new LaneEnds(inConnect, outConnect);
     }
 
-    private static MiddleRailPairPlan randomMiddleRailPairPlan(ServerLevel level) {
+    private static MiddleRailPairPlan drawMiddleRailPairPlan(
+            ServerLevel level,
+            List<RailDefinition> railDeck,
+            List<SideDungeonDefinition> westDungeonDeck,
+            List<SideDungeonDefinition> eastDungeonDeck
+    ) {
         return new MiddleRailPairPlan(
-                randomRailClusterPlan(level),
-                randomRailClusterPlan(level)
+                drawRailClusterPlan(level, railDeck, westDungeonDeck, eastDungeonDeck),
+                drawRailClusterPlan(level, railDeck, westDungeonDeck, eastDungeonDeck)
         );
     }
 
-    private static RailClusterPlan randomRailClusterPlan(ServerLevel level) {
-        RailChoice rail = randomRailChoice(level);
+    private static RailClusterPlan drawRailClusterPlan(
+            ServerLevel level,
+            List<RailDefinition> railDeck,
+            List<SideDungeonDefinition> westDungeonDeck,
+            List<SideDungeonDefinition> eastDungeonDeck
+    ) {
+        RailChoice rail = drawRailChoice(level, railDeck, westDungeonDeck, eastDungeonDeck);
 
         SideDungeonDefinition westDungeon = null;
         SideDungeonDefinition eastDungeon = null;
 
         if (rail.hasSideDungeon()) {
-            if (!SideDungeonRegistry.west().isEmpty()) {
-                westDungeon = WeightedPicker.pick(
-                        level,
-                        SideDungeonRegistry.west(),
-                        SideDungeonDefinition::weight
-                );
-            }
+            westDungeon = drawSideDungeon(level, westDungeonDeck);
+            eastDungeon = drawSideDungeon(level, eastDungeonDeck);
 
-            if (!SideDungeonRegistry.east().isEmpty()) {
-                eastDungeon = WeightedPicker.pick(
-                        level,
-                        SideDungeonRegistry.east(),
-                        SideDungeonDefinition::weight
-                );
+            if (westDungeon == null && eastDungeon == null) {
+                rail = normalRailChoice(level);
             }
         }
 
@@ -415,23 +483,70 @@ public class UnitChainTestBuilder {
         );
     }
 
-    private static RailChoice randomRailChoice(ServerLevel level) {
-        boolean useCollapse = level.getRandom().nextBoolean();
+    private static RailChoice drawRailChoice(
+            ServerLevel level,
+            List<RailDefinition> railDeck,
+            List<SideDungeonDefinition> westDungeonDeck,
+            List<SideDungeonDefinition> eastDungeonDeck
+    ) {
+        boolean hasSideDungeonCards = !westDungeonDeck.isEmpty() || !eastDungeonDeck.isEmpty();
 
-        if (useCollapse && exists(level, "collapse_rail")) {
-            return new RailChoice(
-                    "collapse_rail",
-                    load(level, "collapse_rail"),
-                    false
-            );
+        List<RailDefinition> available = railDeck.stream()
+                .filter(def -> exists(level, def.structureName()))
+                .filter(def -> !def.allowSideDungeon() || hasSideDungeonCards)
+                .toList();
+
+        if (available.isEmpty()) {
+            return normalRailChoice(level);
         }
 
+        RailDefinition def = WeightedPicker.pick(
+                level,
+                available,
+                RailDefinition::weight
+        );
+
+        railDeck.remove(def);
+
         return new RailChoice(
-                "rail_with_side_street",
-                load(level, "rail_with_side_street"),
-                true
+                def.structureName(),
+                load(level, def.structureName()),
+                def.allowSideDungeon()
         );
     }
+
+    private static RailChoice normalRailChoice(ServerLevel level) {
+        return new RailChoice(
+                "normal_rail",
+                load(level, "normal_rail"),
+                false
+        );
+    }
+
+    private static SideDungeonDefinition drawSideDungeon(
+            ServerLevel level,
+            List<SideDungeonDefinition> deck
+    ) {
+        if (deck.isEmpty()) {
+            return null;
+        }
+
+        SideDungeonDefinition def = WeightedPicker.pick(
+                level,
+                deck,
+                SideDungeonDefinition::weight
+        );
+
+        deck.remove(def);
+        return def;
+    }
+
+    private static List<RailDefinition> createRailDeck(ServerLevel level) {
+        return RailRegistry.RAILS.stream()
+                .filter(def -> exists(level, def.structureName()))
+                .collect(java.util.stream.Collectors.toCollection(ArrayList::new));
+    }
+
 
     private static BlockPos findSafeMiddleRailPairOrigin(
             ServerLevel level,
@@ -565,20 +680,7 @@ public class UnitChainTestBuilder {
         LaneEnds westEnds = physicalLaneEndsByZ(physicalWestRail);
         LaneEnds eastEnds = physicalLaneEndsByZ(physicalEastRail);
 
-        debugLogMiddleLane("FIRST_MIDDLE_LANE", firstRail, firstLaneNodes);
-        debugLogMiddleLane("SECOND_MIDDLE_LANE", secondRail, secondLaneNodes);
 
-        System.out.println("========== [PollutedWorld] STATION CONNECTS ==========");
-        System.out.println("station westIn=" + referenceStation.westInConnect());
-        System.out.println("station westOut=" + referenceStation.westOutConnect());
-        System.out.println("station eastIn=" + referenceStation.eastInConnect());
-        System.out.println("station eastOut=" + referenceStation.eastOutConnect());
-
-        System.out.println("========== [PollutedWorld] CONNECT RESULT ==========");
-        System.out.println("middle westIn=" + westEnds.inConnect());
-        System.out.println("middle westOut=" + westEnds.outConnect());
-        System.out.println("middle eastIn=" + eastEnds.inConnect());
-        System.out.println("middle eastOut=" + eastEnds.outConnect());
 
 
         return new MiddleRailPairUnit(
@@ -612,7 +714,9 @@ public class UnitChainTestBuilder {
             MiddleRailPairPlan plan,
             int margin
     ) {
-        List<StructureNode> virtualNodes = new ArrayList<>();
+        List<StructureNode> westNodes = new ArrayList<>();
+        List<StructureNode> eastNodes = new ArrayList<>();
+        List<StructureNode> allNodes = new ArrayList<>();
 
         LaneConnects connects = findSeparatedMiddleLaneConnects(
                 level,
@@ -624,7 +728,7 @@ public class UnitChainTestBuilder {
 
         virtualRailCluster(
                 level,
-                virtualNodes,
+                westNodes,
                 plan.west(),
                 connects.west(),
                 Rotation.CLOCKWISE_180
@@ -632,15 +736,39 @@ public class UnitChainTestBuilder {
 
         virtualRailCluster(
                 level,
-                virtualNodes,
+                eastNodes,
                 plan.east(),
                 connects.east(),
                 Rotation.CLOCKWISE_180
         );
 
+        UnitBounds westBounds = UnitBounds.fromNodes(
+                "virtual_middle_west_lane",
+                westNodes,
+                margin
+        );
+
+        UnitBounds eastBounds = UnitBounds.fromNodes(
+                "virtual_middle_east_lane",
+                eastNodes,
+                margin
+        );
+
+        if (westBounds.intersects(eastBounds)) {
+            throw new IllegalStateException(
+                    "Virtual middle lanes collide: west="
+                            + westBounds
+                            + " east="
+                            + eastBounds
+            );
+        }
+
+        allNodes.addAll(westNodes);
+        allNodes.addAll(eastNodes);
+
         return UnitBounds.fromNodes(
                 "middle_rail_pair_candidate",
-                virtualNodes,
+                allNodes,
                 margin
         );
     }
@@ -703,24 +831,12 @@ public class UnitChainTestBuilder {
             );
 
             if (!westBounds.intersects(eastBounds)) {
-                System.out.println(
-                        "[PollutedWorld] Middle lanes separated"
-                                + " spread=" + spread
-                                + " westConnect=" + westConnect
-                                + " eastConnect=" + eastConnect
-                                + " westBounds=" + westBounds
-                                + " eastBounds=" + eastBounds
-                );
+
 
                 return new LaneConnects(westConnect, eastConnect);
             }
 
-            System.out.println(
-                    "[PollutedWorld] Middle lanes still collide"
-                            + " spread=" + spread
-                            + " westBounds=" + westBounds
-                            + " eastBounds=" + eastBounds
-            );
+
         }
 
         throw new IllegalStateException("No safe middle lane spread found.");
@@ -975,28 +1091,69 @@ public class UnitChainTestBuilder {
         List<StructureTemplate.StructureBlockInfo> barriers =
                 getSortedMarkers(template, origin, settings, Blocks.BARRIER);
 
+        clearReplaceableBlocksInTemplateArea(level, origin, template.getSize());
+
         boolean placed = template.placeInWorld(
                 level,
                 origin,
                 origin,
                 settings,
                 level.getRandom(),
-                Block.UPDATE_ALL
+                Block.UPDATE_CLIENTS
         );
 
         if (!placed) {
             throw new IllegalStateException("Failed to place structure: " + structureName);
         }
 
-        return new StructureNode(
-                structureName,
-                template,
-                origin,
-                rotation,
-                template.getSize(),
-                jigsaws,
-                barriers
+        return com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor.processAndReturn(
+                level,
+                new StructureNode(
+                        structureName,
+                        template,
+                        origin,
+                        rotation,
+                        template.getSize(),
+                        jigsaws,
+                        barriers
+                )
         );
+    }
+
+    private static void clearReplaceableBlocksInTemplateArea(
+            ServerLevel level,
+            BlockPos origin,
+            Vec3i size
+    ) {
+        for (int x = 0; x < size.getX(); x++) {
+            for (int y = 0; y < size.getY(); y++) {
+                for (int z = 0; z < size.getZ(); z++) {
+                    BlockPos pos = origin.offset(x, y, z);
+
+                    if (isReplaceableForStructure(level, pos)) {
+                        level.removeBlock(pos, false);
+                    }
+                }
+            }
+        }
+    }
+
+    private static boolean isReplaceableForStructure(ServerLevel level, BlockPos pos) {
+        var state = level.getBlockState(pos);
+
+        if (state.is(Blocks.FARMLAND)
+                || state.is(Blocks.WHEAT)
+                || state.is(Blocks.CARROTS)
+                || state.is(Blocks.POTATOES)
+                || state.is(Blocks.BEETROOTS)) {
+            return false;
+        }
+
+        return state.isAir()
+                || state.canBeReplaced()
+                || state.is(Blocks.DEAD_BUSH)
+                || state.is(Blocks.SHORT_GRASS)
+                || state.is(Blocks.TALL_GRASS);
     }
 
     private static StructurePlaceSettings settings(Rotation rotation) {
@@ -1053,43 +1210,6 @@ public class UnitChainTestBuilder {
         return baseGap + reserve;
     }
 
-    private static void debugLogMiddleLane(
-            String label,
-            StructureNode rail,
-            List<StructureNode> laneNodes
-    ) {
-        BlockPos railIn = rail.marker("polluted_world:rail_in");
-        BlockPos railOut = rail.marker("polluted_world:rail_out");
-
-        UnitBounds bounds = UnitBounds.fromNodes(
-                label + "_bounds",
-                laneNodes,
-                MIDDLE_RAIL_PAIR_MARGIN
-        );
-
-        System.out.println("========== [PollutedWorld] " + label + " ==========");
-        System.out.println("rail=" + rail.structureName());
-        System.out.println("origin=" + rail.origin());
-        System.out.println("rotation=" + rail.rotation());
-        System.out.println("rail_in=" + railIn);
-        System.out.println("rail_out=" + railOut);
-        System.out.println("physicalInByZ=" + physicalLaneEndsByZ(rail).inConnect());
-        System.out.println("physicalOutByZ=" + physicalLaneEndsByZ(rail).outConnect());
-        System.out.println("bounds=" + bounds);
-
-        for (StructureNode node : laneNodes) {
-            System.out.println(
-                    "  node="
-                            + node.structureName()
-                            + " origin=" + node.origin()
-                            + " size=" + node.size()
-                            + " minX=" + node.minX()
-                            + " maxX=" + node.maxX()
-                            + " minZ=" + node.minZ()
-                            + " maxZ=" + node.maxZ()
-            );
-        }
-    }
 
     private static List<StationDefinition> createStationDeck() {
         return new ArrayList<>(StationRegistry.ADDITIONAL_STATIONS);
@@ -1122,4 +1242,227 @@ public class UnitChainTestBuilder {
 
         return deck.remove(deck.size() - 1);
     }
+
+    private static void placeSurfaceRuinsAroundSurfaceAnchors(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units
+    ) {
+        List<StructureNode> anchorNodes = nodes.stream()
+                .filter(node -> node.hasMarker("polluted_world:surface_anchor"))
+                .toList();
+
+        for (StructureNode anchorNode : anchorNodes) {
+            BlockPos anchor = anchorNode.marker("polluted_world:surface_anchor");
+
+            for (int i = 0; i < 4; i++) {
+                tryPlaceSurfaceRuinNear(level, nodes, units, anchor);
+            }
+        }
+    }
+
+    private static void tryPlaceSurfaceRuinNear(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units,
+            BlockPos anchor
+    ) {
+        for (int attempt = 0; attempt < 24; attempt++) {
+            int distance = 96 + level.getRandom().nextInt(320);
+            int dx = level.getRandom().nextBoolean() ? distance : -distance;
+            int dz = level.getRandom().nextInt(distance * 2 + 1) - distance;
+
+            if (level.getRandom().nextBoolean()) {
+                int t = dx;
+                dx = dz;
+                dz = t;
+            }
+
+            BlockPos near = anchor.offset(dx, 0, dz);
+
+            var definition = WeightedPicker.pick(
+                    level,
+                    com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL,
+                    com.licht_meilleur.polluted_world.world.definition.SurfaceStructureDefinition::weight
+            );
+
+            StructureTemplate template = load(level, definition.structureName());
+
+            int y = level.getHeight(
+                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    near.getX(),
+                    near.getZ()
+            );
+
+            BlockPos surfacePos = new BlockPos(near.getX(), y, near.getZ());
+
+            BlockPos anchorLocalPos = getLocalMarkerPos(
+                    template,
+                    definition.anchorMarker(),
+                    Rotation.NONE
+            );
+
+            BlockPos origin = new BlockPos(
+                    surfacePos.getX() - anchorLocalPos.getX(),
+                    surfacePos.getY() - anchorLocalPos.getY(),
+                    surfacePos.getZ() - anchorLocalPos.getZ()
+            );
+
+            UnitBounds candidate = UnitBounds.fromOriginSize(
+                    "surface_ruin_candidate",
+                    origin,
+                    template.getSize(),
+                    48
+            );
+
+            boolean collides = false;
+
+            for (UnitBounds unit : units) {
+                if (candidate.intersects(unit)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if (collides) {
+                continue;
+            }
+
+            StructureNode node = placeAt(
+                    level,
+                    definition.structureName(),
+                    template,
+                    origin,
+                    Rotation.NONE
+            );
+
+            nodes.add(node);
+            units.add(UnitBounds.fromNodes(
+                    "surface_ruin_" + definition.structureName(),
+                    List.of(node),
+                    48
+            ));
+
+            return;
+        }
+    }
+
+    private static BlockPos getLocalMarkerPos(
+            StructureTemplate template,
+            String markerName,
+            Rotation rotation
+    ) {
+        StructurePlaceSettings settings = settings(rotation);
+
+        return getSortedMarkers(template, BlockPos.ZERO, settings, Blocks.JIGSAW)
+                .stream()
+                .filter(info -> markerName.equals(getJigsawName(info)))
+                .map(StructureTemplate.StructureBlockInfo::pos)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Local marker not found: " + markerName));
+    }
+
+
+
+    private static void placeFarSurfaceRuins(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units,
+            BlockPos origin
+    ) {
+        for (int i = 0; i < 12; i++) {
+            tryPlaceSurfaceRuinNear(level, nodes, units, origin, 800, 3000);
+        }
+    }
+
+    private static void tryPlaceSurfaceRuinNear(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units,
+            BlockPos center,
+            int minDistance,
+            int maxDistance
+    ) {
+        for (int attempt = 0; attempt < 32; attempt++) {
+            int distance = minDistance + level.getRandom().nextInt(maxDistance - minDistance + 1);
+
+            int dx = level.getRandom().nextBoolean() ? distance : -distance;
+            int dz = level.getRandom().nextInt(distance * 2 + 1) - distance;
+
+            if (level.getRandom().nextBoolean()) {
+                int t = dx;
+                dx = dz;
+                dz = t;
+            }
+
+            BlockPos near = center.offset(dx, 0, dz);
+
+            var definition = WeightedPicker.pick(
+                    level,
+                    com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL,
+                    com.licht_meilleur.polluted_world.world.definition.SurfaceStructureDefinition::weight
+            );
+
+            StructureTemplate template = load(level, definition.structureName());
+
+            int y = level.getHeight(
+                    net.minecraft.world.level.levelgen.Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    near.getX(),
+                    near.getZ()
+            );
+
+            BlockPos surfacePos = new BlockPos(near.getX(), y, near.getZ());
+
+            BlockPos localAnchor = getLocalMarkerPos(
+                    template,
+                    definition.anchorMarker(),
+                    Rotation.NONE
+            );
+
+            BlockPos structureOrigin = new BlockPos(
+                    surfacePos.getX() - localAnchor.getX(),
+                    surfacePos.getY() - localAnchor.getY(),
+                    surfacePos.getZ() - localAnchor.getZ()
+            );
+
+            UnitBounds candidate = UnitBounds.fromOriginSize(
+                    "surface_ruin_candidate",
+                    structureOrigin,
+                    template.getSize(),
+                    64
+            );
+
+            boolean collides = false;
+
+            for (UnitBounds unit : units) {
+                if (candidate.intersects(unit)) {
+                    collides = true;
+                    break;
+                }
+            }
+
+            if (collides) {
+                continue;
+            }
+
+            StructureNode node = placeAt(
+                    level,
+                    definition.structureName(),
+                    template,
+                    structureOrigin,
+                    Rotation.NONE
+            );
+
+            nodes.add(node);
+            units.add(UnitBounds.fromNodes(
+                    "surface_ruin_" + definition.structureName(),
+                    List.of(node),
+                    64
+            ));
+
+            return;
+        }
+    }
+
+
 }
