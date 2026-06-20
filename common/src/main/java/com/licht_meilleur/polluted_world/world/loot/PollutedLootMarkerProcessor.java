@@ -1,6 +1,7 @@
 package com.licht_meilleur.polluted_world.world.loot;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
+import com.licht_meilleur.polluted_world.compat.JustEnoughGunsLootCompat;
 import com.licht_meilleur.polluted_world.world.StructureNode;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -51,9 +52,29 @@ public final class PollutedLootMarkerProcessor {
                 );
 
                 container.setLootTable(key, level.getRandom().nextLong());
+
+                // JEG連携対象だけ、ルートテーブル展開後にボーナス追加
+                if (path.equals("start_supply") || path.equals("military") || path.equals("rare") || path.equals("legendary")) {
+                    container.unpackLootTable(null);
+                    JustEnoughGunsLootCompat.addBonusLoot(
+                            container,
+                            level.getRandom(),
+                            categoryFor(path)
+                    );
+                }
+
                 container.setChanged();
             }
         }
+    }
+
+    private static JustEnoughGunsLootCompat.Category categoryFor(String path) {
+        return switch (path) {
+            case "start_supply" -> JustEnoughGunsLootCompat.Category.START_SUPPLY;
+            case "rare" -> JustEnoughGunsLootCompat.Category.RARE;
+            case "legendary" -> JustEnoughGunsLootCompat.Category.LEGENDARY;
+            default -> JustEnoughGunsLootCompat.Category.MILITARY;
+        };
     }
 
     private static BlockPos findNearestContainer(ServerLevel level, BlockPos center, int radius) {

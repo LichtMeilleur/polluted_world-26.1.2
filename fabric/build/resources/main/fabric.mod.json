@@ -1,7 +1,7 @@
 {
 	"schemaVersion": 1,
 	"id": "polluted_world",
-	"version": "1.0.0",
+	"version": "0.0.1",
 	"name": "Polluted World",
 	"description": "A polluted surface survival mod.",
 	"authors": [

@@ -1,7 +1,7 @@
 package com.licht_meilleur.polluted_world.world;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
-import com.licht_meilleur.polluted_world.registry.ModBlocks;
+import com.licht_meilleur.polluted_world.registry.PollutedBlocks;
 import com.licht_meilleur.polluted_world.world.definition.RailDefinition;
 import com.licht_meilleur.polluted_world.world.definition.SideDungeonDefinition;
 import com.licht_meilleur.polluted_world.world.definition.StationDefinition;
@@ -1686,11 +1686,13 @@ public class UnitChainTestBuilder {
         Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(level.getRandom());
 
         return switch (def.blockName()) {
-            case "corpse_chest_01" -> ModBlocks.CORPSE_CHEST_01.defaultBlockState()
-                    .setValue(HorizontalDirectionalBlock.FACING, facing);
+            case "corpse_chest_01" ->
+                    PollutedBlocks.corpseChest01().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, facing);
 
-            default -> ModBlocks.CORPSE_CHEST_01.defaultBlockState()
-                    .setValue(HorizontalDirectionalBlock.FACING, facing);
+            default ->
+                    PollutedBlocks.corpseChest01().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, facing);
         };
     }
 

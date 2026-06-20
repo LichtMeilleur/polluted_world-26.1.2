@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": { "min": 2, "max": 5 },
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:paper", "weight": 8 },
+        { "type": "minecraft:item", "name": "minecraft:book", "weight": 5 },
+        { "type": "minecraft:item", "name": "minecraft:leather", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:string", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:candle", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:charcoal", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:bread", "weight": 2 },
+        { "type": "minecraft:item", "name": "minecraft:map", "weight": 1 }
+      ]
+    }
+  ]
+}

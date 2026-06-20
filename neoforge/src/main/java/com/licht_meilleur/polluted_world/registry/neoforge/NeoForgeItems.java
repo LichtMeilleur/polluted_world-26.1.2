@@ -17,7 +17,8 @@ public final class NeoForgeItems {
 
     public static final DeferredHolder<Item, Item> GAS_MASK =
             ITEMS.register("gas_mask", () -> new GasMaskItem(new Item.Properties()
-                    .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("gas_mask")))));
+                    .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("gas_mask")))
+                    .durability(100)));
 
     public static final DeferredHolder<Item, Item> ACTIVATED_CHARCOAL =
             ITEMS.register("activated_charcoal", () -> new Item(new Item.Properties()
@@ -26,17 +27,17 @@ public final class NeoForgeItems {
     public static final DeferredHolder<Item, Item> POOR_FILTER =
             ITEMS.register("poor_filter", () -> new FilterItem(new Item.Properties()
                     .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("poor_filter")))
-                    .durability(400)));
+                    .durability(200)));
 
     public static final DeferredHolder<Item, Item> FILTER =
             ITEMS.register("filter", () -> new FilterItem(new Item.Properties()
                     .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("filter")))
-                    .durability(1200)));
+                    .durability(600)));
 
     public static final DeferredHolder<Item, Item> HIGH_FILTER =
             ITEMS.register("high_filter", () -> new FilterItem(new Item.Properties()
                     .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("high_filter")))
-                    .durability(3000)));
+                    .durability(1200)));
 
     private NeoForgeItems() {
     }

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "pattern": [
+    "WWW",
+    "WCW",
+    "WIW"
+  ],
+  "key": {
+    "W": "minecraft:white_wool",
+    "C": "minecraft:charcoal",
+    "I": "minecraft:iron_ingot"
+  },
+  "result": {
+    "id": "polluted_world:filter",
+    "count": 1
+  }
+}

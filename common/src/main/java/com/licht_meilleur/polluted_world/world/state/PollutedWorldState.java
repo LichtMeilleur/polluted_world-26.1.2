@@ -15,7 +15,12 @@ import java.util.Set;
 import java.util.UUID;
 
 public class PollutedWorldState extends SavedData {
+
+    private static final int DATA_VERSION = 1;
+
+
     private static final Codec<PollutedWorldState> CODEC = RecordCodecBuilder.create(instance -> instance.group(
+            Codec.INT.optionalFieldOf("dataVersion", 0).forGetter(state -> DATA_VERSION),
             Codec.BOOL.fieldOf("generated").forGetter(PollutedWorldState::isGenerated),
             BlockPos.CODEC.optionalFieldOf("startSpawnPos", BlockPos.ZERO).forGetter(state ->
                     state.startSpawnPos == null ? BlockPos.ZERO : state.startSpawnPos
@@ -37,11 +42,11 @@ public class PollutedWorldState extends SavedData {
     private final Set<UUID> firstJoinedPlayers = new HashSet<>();
 
     public PollutedWorldState() {
-        this(false, BlockPos.ZERO, List.of());
+        this(DATA_VERSION, false, BlockPos.ZERO, List.of());
         this.startSpawnPos = null;
     }
 
-    private PollutedWorldState(boolean generated, BlockPos startSpawnPos, List<String> playerIds) {
+    private PollutedWorldState(int dataVersion, boolean generated, BlockPos startSpawnPos, List<String> playerIds) {
         this.generated = generated;
         this.startSpawnPos = startSpawnPos.equals(BlockPos.ZERO) ? null : startSpawnPos;
 

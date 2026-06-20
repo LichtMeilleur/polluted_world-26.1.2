@@ -1,0 +1,113 @@
+---- Minecraft Crash Report ----
+// Uh... Did I do that?
+
+Time: 2026-06-20 12:46:45
+Description: Exception in server tick loop
+
+java.lang.ExceptionInInitializerError: null
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.world.UnitChainTestBuilder.randomCorpseState(UnitChainTestBuilder.java:1689) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.world.UnitChainTestBuilder.tryPlaceRandomCorpseNearNode(UnitChainTestBuilder.java:1553) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.world.UnitChainTestBuilder.placeRandomCorpseLoots(UnitChainTestBuilder.java:1516) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.world.UnitChainTestBuilder.place(UnitChainTestBuilder.java:202) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.world.PollutedStructurePlacer.placeUnitChainOnSurface(PollutedStructurePlacer.java:268) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.world.PollutedStartManager.tick(PollutedStartManager.java:29) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.PollutedWorldNeoForge.onServerTick(PollutedWorldNeoForge.java:43) ~[main/:?] {}
+	at net.neoforged.bus.EventBus.post(EventBus.java:360) ~[bus-8.0.5.jar:?] {}
+	at net.neoforged.bus.EventBus.post(EventBus.java:328) ~[bus-8.0.5.jar:?] {}
+	at TRANSFORMER/neoforge@26.1.2.43-beta/net.neoforged.neoforge.event.EventHooks.fireServerTickPost(EventHooks.java:1012) ~[neoforge-26.1.2.43-beta-universal.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.server.MinecraftServer.tickServer(MinecraftServer.java:1025) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.server.IntegratedServer.tickServer(IntegratedServer.java:146) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.server.MinecraftServer.processPacketsAndTick(MinecraftServer.java:1035) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.client.server.IntegratedServer.processPacketsAndTick(IntegratedServer.java:119) ~[minecraft-patched-26.1.2.43-beta.jar:?] {}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.server.MinecraftServer.runServer(MinecraftServer.java:776) [minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.server.MinecraftServer.lambda$spin$0(MinecraftServer.java:300) [minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at java.base/java.lang.Thread.run(Thread.java:1474) [?:?] {}
+Caused by: java.lang.IllegalStateException: Registry is already frozen
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.core.MappedRegistry.validateWrite(MappedRegistry.java:77) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:mixin[APP:neoforge.mixins.json:MappedRegistryAccessor from mod neoforge]}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.core.MappedRegistry.createIntrusiveHolder(MappedRegistry.java:349) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:mixin[APP:neoforge.mixins.json:MappedRegistryAccessor from mod neoforge]}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.world.level.block.Block.<init>(Block.java:81) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/minecraft@26.1.2/net.minecraft.world.level.block.HorizontalDirectionalBlock.<init>(HorizontalDirectionalBlock.java:14) ~[minecraft-patched-26.1.2.43-beta.jar:?] {neoforge:access_transformer}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.block.CorpseLootBlock.<init>(CorpseLootBlock.java:42) ~[main/:?] {}
+	at TRANSFORMER/polluted_world@0.0.1/com.licht_meilleur.polluted_world.registry.ModBlocks.<clinit>(ModBlocks.java:15) ~[main/:?] {}
+	... 17 more
+
+
+A detailed walkthrough of the error, its code path and all known details is as follows:
+---------------------------------------------------------------------------------------
+
+-- System Details --
+Details:
+	Minecraft Version: 26.1.2
+	Minecraft Version ID: 26.1.2
+	Operating System: Windows 11 (amd64) version 10.0
+	Java Version: 25.0.3, Oracle Corporation
+	Java VM Version: Java HotSpot(TM) 64-Bit Server VM (mixed mode, sharing), Oracle Corporation
+	Memory: 651458968 bytes (621 MiB) / 1644167168 bytes (1568 MiB) up to 17129537536 bytes (16336 MiB)
+	Memory (heap): init: 1024MiB, used: 944MiB, committed: 1568MiB, max: 16336MiB
+	Memory (non-head): init: 007MiB, used: 218MiB, committed: 230MiB, max: 000MiB
+	CPUs: 28
+	Processor Vendor: GenuineIntel
+	Processor Name: Intel(R) Core(TM) i7-14700K
+	Identifier: Intel64 Family 6 Model 183 Stepping 1
+	Microarchitecture: Raptor Lake
+	Frequency (GHz): 3.42
+	Number of physical packages: 1
+	Number of physical CPUs: 20
+	Number of logical CPUs: 28
+	Graphics card #0 name: Intel(R) UHD Graphics 770
+	Graphics card #0 vendor: Intel Corporation
+	Graphics card #0 VRAM (MiB): 2048.00
+	Graphics card #0 deviceId: VideoController1
+	Graphics card #0 versionInfo: 32.0.101.7082
+	Graphics card #1 name: NVIDIA GeForce GTX 1650
+	Graphics card #1 vendor: NVIDIA
+	Graphics card #1 VRAM (MiB): 4096.00
+	Graphics card #1 deviceId: VideoController2
+	Graphics card #1 versionInfo: 32.0.15.9649
+	Memory slot #0 capacity (MiB): 32768.00
+	Memory slot #0 clockSpeed (GHz): 5.60
+	Memory slot #0 type: DDR5
+	Memory slot #1 capacity (MiB): 32768.00
+	Memory slot #1 clockSpeed (GHz): 5.60
+	Memory slot #1 type: DDR5
+	Virtual memory max (MiB): 130848.09
+	Virtual memory used (MiB): 39988.07
+	Swap memory total (MiB): 65536.00
+	Swap memory used (MiB): 79.50
+	Space in storage for jna.tmpdir (MiB): <path not set>
+	Space in storage for org.lwjgl.system.SharedLibraryExtractPath (MiB): <path not set>
+	Space in storage for io.netty.native.workdir (MiB): <path not set>
+	Space in storage for java.io.tmpdir (MiB): available: 394791.59, total: 952352.00
+	Space in storage for workdir (MiB): available: 935980.19, total: 3813873.00
+	JVM Flags: 0 total; 
+	Debug Flags: 0 total; 
+	Server Running: true
+	Player Count: 1 / 8; [ServerPlayer['Dev'/1, l='ServerLevel[新規ワールド]', x=-1.50, y=30.00, z=-93.50]]
+	Active Data Packs: vanilla, mod_data, mod/terrablender (incompatible), mod/polluted_world, mod/neoforge
+	Available Data Packs: minecart_improvements, redstone_experiments, trade_rebalance, vanilla, mod/neoforge, mod/polluted_world, mod/terrablender (incompatible), mod_data
+	Enabled Feature Flags: minecraft:vanilla
+	World Generation: Stable
+	World Seed: -6921633340446606715
+	Suppressed Exceptions: ~~NONE~~
+	Type: Integrated Server
+	Is Modded: Definitely; Client brand changed to 'neoforge'; Server brand changed to 'neoforge'
+	Launched Version: 26.1.2.43-beta
+	Class Processors: 
+		00.00%: neoforge:neoforge_dev_dist_cleaner
+		00.00%: neoforge:computing_frames (marker)
+		00.00%: neoforge:runtime_enum_extender
+		04.43%: neoforge:access_transformer
+		00.16%: neoforge:mixin
+		00.00%: neoforge:simple_processors_default (marker)
+		00.01%: neoforge.coremods:field_to_getter.net.minecraft.world.level.biome.biome
+		00.01%: neoforge.coremods:field_to_getter.net.minecraft.world.level.block.flowerpotblock
+		00.01%: neoforge.coremods:field_to_getter.net.minecraft.world.level.levelgen.structure.structure
+		00.28%: neoforge.coremods:method_redirector
+	Mod List: 
+		minecraft-patched-26.1.2.43-beta.jar              |Minecraft                     |minecraft                     |26.1.2              |Manifest: NOSIGNATURE
+		neoforge-26.1.2.43-beta-universal.jar             |NeoForge                      |neoforge                      |26.1.2.43-beta      |Manifest: NOSIGNATURE
+		main                                              |polluted_world                |polluted_world                |0.0.1               |Manifest: NOSIGNATURE
+		TerraBlender-neoforge-26.1.2-26.1.2.0.2.jar       |TerraBlender                  |terrablender                  |26.1.2.0.2          |Manifest: 5f9296e7c28feedf7f1fefcbb936f9cbd3954fe732025300c761165c96373c7e
+	Crash Report UUID: 19a8d96f-36c7-494d-b2e3-c267093cbe18
+	FML: 11.0.13
+	NeoForge: 26.1.2.43-beta

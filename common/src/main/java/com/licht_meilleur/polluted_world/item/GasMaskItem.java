@@ -1,14 +1,11 @@
 package com.licht_meilleur.polluted_world.item;
 
-import com.licht_meilleur.polluted_world.PollutedWorldMod;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -20,6 +17,9 @@ import net.minecraft.world.item.equipment.Equippable;
 import net.minecraft.world.level.Level;
 
 public class GasMaskItem extends Item {
+    private static final int DATA_VERSION = 1;
+
+    public static final String TAG_DATA_VERSION = "PollutedWorldGasMaskDataVersion";
     public static final String FILTER_ID = "FilterId";
     public static final String FILTER_DAMAGE = "FilterDamage";
     public static final String FILTER_MAX_DAMAGE = "FilterMaxDamage";
@@ -55,6 +55,7 @@ public class GasMaskItem extends Item {
         CustomData data = gasMask.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY);
 
         gasMask.set(DataComponents.CUSTOM_DATA, data.update(tag -> {
+            tag.putInt(TAG_DATA_VERSION, DATA_VERSION);
             tag.putString(FILTER_ID, filterId.toString());
             tag.putInt(FILTER_DAMAGE, 0);
             tag.putInt(FILTER_MAX_DAMAGE, filter.getMaxDamage());
@@ -79,14 +80,12 @@ public class GasMaskItem extends Item {
                 tag.remove(FILTER_ID);
                 tag.remove(FILTER_DAMAGE);
                 tag.remove(FILTER_MAX_DAMAGE);
+                tag.remove(TAG_DATA_VERSION);
             } else {
+                tag.putInt(TAG_DATA_VERSION, DATA_VERSION);
                 tag.putInt(FILTER_DAMAGE, next);
             }
         }));
-    }
-
-    private static CompoundTag customTag(ItemStack stack) {
-        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
     }
 
     public static ItemStack removeInstalledFilter(ItemStack gasMask) {
@@ -96,22 +95,29 @@ public class GasMaskItem extends Item {
             return ItemStack.EMPTY;
         }
 
+        int version = tag.getInt(TAG_DATA_VERSION).orElse(0);
+
+        // version 0 = バージョンNBT導入前の古いガスマスク
+        // 今の保存形式は同じなので、ここでは何もしない
+        if (version == 0) {
+            // no migration needed
+        }
+
         String id = tag.getString(FILTER_ID).orElse("");
         int damage = tag.getInt(FILTER_DAMAGE).orElse(0);
-        int max = tag.getInt(FILTER_MAX_DAMAGE).orElse(0);
 
         Item item = BuiltInRegistries.ITEM
                 .getOptional(Identifier.tryParse(id))
                 .orElse(null);
 
-
         if (item == null) {
+            clearInstalledFilter(gasMask);
             return ItemStack.EMPTY;
         }
 
         ItemStack filter = new ItemStack(item);
 
-        if (max > 0) {
+        if (filter.isDamageableItem()) {
             int safeDamage = Math.max(0, Math.min(damage, filter.getMaxDamage() - 1));
             filter.setDamageValue(safeDamage);
         }
@@ -128,16 +134,19 @@ public class GasMaskItem extends Item {
             tag.remove(FILTER_ID);
             tag.remove(FILTER_DAMAGE);
             tag.remove(FILTER_MAX_DAMAGE);
+            tag.remove(TAG_DATA_VERSION);
         }));
+    }
+
+    private static CompoundTag customTag(ItemStack stack) {
+        return stack.getOrDefault(DataComponents.CUSTOM_DATA, CustomData.EMPTY).copyTag();
     }
 
     @Override
     public InteractionResult use(Level level, Player player, InteractionHand hand) {
         ItemStack gasMask = player.getItemInHand(hand);
 
-        // オフハンド時はフィルター操作
         if (hand == InteractionHand.OFF_HAND) {
-
             if (!player.getMainHandItem().isEmpty()) {
                 return InteractionResult.PASS;
             }
@@ -154,7 +163,7 @@ public class GasMaskItem extends Item {
 
             if (removed.isEmpty()) {
                 serverPlayer.sendOverlayMessage(
-                        Component.literal("フィルターは装着されていません")
+                        Component.translatable("message.polluted_world.no_installed_filter")
                 );
                 return InteractionResult.CONSUME;
             }
@@ -164,13 +173,12 @@ public class GasMaskItem extends Item {
             }
 
             serverPlayer.sendOverlayMessage(
-                    Component.literal("フィルターを取り外した")
+                    Component.translatable("message.polluted_world.filter_removed")
             );
 
             return InteractionResult.CONSUME;
         }
 
-        // メインハンド時は装備
         return super.use(level, player, hand);
     }
 }

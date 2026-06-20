@@ -1,0 +1,20 @@
+{
+  "item.polluted_world.gas_mask": "Gas Mask",
+  "item.polluted_world.activated_charcoal": "activated charcoal",
+  "item.polluted_world.poor_filter": "Poor Filter",
+  "item.polluted_world.filter": "Filter",
+  "item.polluted_world.high_filter": "High-Grade Filter",
+  "itemGroup.polluted_world": "Polluted World",
+
+  "block.polluted_world.corpse_chest_01": "Corpse Chest",
+
+  "message.polluted_world.no_filter": "No filter installed",
+  "message.polluted_world.filter_broken": "The filter broke",
+  "message.polluted_world.filter_changed": "Filter changed",
+  "message.polluted_world.filter_removed": "Filter removed",
+  "message.polluted_world.no_gas_mask": "You are not wearing a gas mask",
+  "message.polluted_world.no_replacement_filter": "No replacement filter available",
+  "message.polluted_world.no_installed_filter": "No filter is installed",
+  "message.polluted_world.nothing_found": "Nothing useful found.",
+  "message.polluted_world.looted_corpse": "Looted corpse"
+}

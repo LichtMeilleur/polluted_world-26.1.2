@@ -1,0 +1,46 @@
+{
+  "has_precipitation": true,
+  "temperature": 0.7,
+  "downfall": 0.08,
+  "effects": {
+    "fog_color": 5592405,
+    "water_color": 2960685,
+    "water_fog_color": 2960685,
+    "sky_color": 6316128,
+    "grass_color": 5592405,
+    "foliage_color": 5592405
+  },
+  "spawners": {},
+  "spawn_costs": {},
+  "carvers": [],
+  "features": [
+    [],
+    [],
+    [],
+    [],
+    [],
+    [],
+    [
+      "minecraft:ore_dirt",
+      "minecraft:ore_gravel",
+      "minecraft:ore_coal_upper",
+      "minecraft:ore_coal_lower",
+      "minecraft:ore_iron_upper",
+      "minecraft:ore_iron_middle",
+      "minecraft:ore_iron_small",
+      "minecraft:ore_gold",
+      "minecraft:ore_redstone",
+      "minecraft:ore_diamond",
+      "minecraft:ore_lapis",
+      "minecraft:ore_copper"
+    ],
+    [],
+    [],
+    [
+      "minecraft:patch_dead_bush",
+      "polluted_world:dry_grass_patch_placed",
+      "polluted_world:dead_tree_placed"
+    ],
+    []
+  ]
+}

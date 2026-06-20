@@ -1,0 +1,22 @@
+{
+  "item.polluted_world.gas_mask": "ガスマスク",
+  "item.polluted_world.activated_charcoal": "活性炭",
+  "item.polluted_world.poor_filter": "粗悪フィルター",
+  "item.polluted_world.filter": "フィルター",
+  "item.polluted_world.high_filter": "高性能フィルター",
+  "itemGroup.polluted_world": "Polluted World",
+  "block.polluted_world.corpse_chest_01": "遺体",
+
+  "category.polluted_world": "Polluted World",
+
+  "message.polluted_world.no_filter": "フィルターが装着されていません",
+  "message.polluted_world.filter_broken": "フィルターが壊れた",
+  "message.polluted_world.filter_changed": "フィルター交換",
+  "message.polluted_world.filter_removed": "フィルターを取り外した",
+  "message.polluted_world.no_gas_mask": "ガスマスクを装備していません",
+  "message.polluted_world.no_replacement_filter": "交換用フィルターがありません",
+  "message.polluted_world.no_installed_filter": "フィルターは装着されていません",
+  "message.polluted_world.nothing_found": "何も見つからなかった",
+  "message.polluted_world.looted_corpse": "死体を漁った"
+
+}

@@ -95,6 +95,8 @@ configurations {
 
 dependencies {
 
+    implementation files("libs/TerraBlender-neoforge-26.1.2-26.1.2.0.2.jar")
+
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -148,5 +150,9 @@ idea {
     }
 }
 tasks.withType(ProcessResources).configureEach {
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}
+
+tasks.withType(Jar).configureEach {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }

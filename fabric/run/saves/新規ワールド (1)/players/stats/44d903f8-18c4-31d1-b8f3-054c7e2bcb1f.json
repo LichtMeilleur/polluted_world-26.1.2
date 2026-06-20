@@ -1,0 +1,21 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "polluted_world:gas_mask": 1,
+      "minecraft:bow": 1
+    },
+    "minecraft:custom": {
+      "minecraft:sprint_one_cm": 4124,
+      "minecraft:open_chest": 1,
+      "minecraft:time_since_rest": 1424,
+      "minecraft:walk_one_cm": 6800,
+      "minecraft:total_world_time": 1449,
+      "minecraft:leave_game": 1,
+      "minecraft:fly_one_cm": 53715,
+      "minecraft:play_time": 1424,
+      "minecraft:jump": 13,
+      "minecraft:time_since_death": 1424
+    }
+  },
+  "DataVersion": 4790
+}

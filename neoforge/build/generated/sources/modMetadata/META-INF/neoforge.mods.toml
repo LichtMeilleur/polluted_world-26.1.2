@@ -2,7 +2,7 @@ license="All Rights Reserved"
 
 [[mods]]
 modId="polluted_world"
-version="1.4.3"
+version="0.0.1"
 displayName="polluted_world"
 authors="LichtMeilleur"
 description='''
@@ -21,4 +21,11 @@ modId="minecraft"
 type="required"
 versionRange="[26.1.2]"
 ordering="NONE"
+side="BOTH"
+
+[[dependencies.polluted_world]]
+modId="terrablender"
+type="required"
+versionRange="[0,)"
+ordering="AFTER"
 side="BOTH"

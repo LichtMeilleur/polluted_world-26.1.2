@@ -37,20 +37,6 @@ public class PollutedWorldClient implements ClientModInitializer {
             }
         });
 
-        /*
-        HudElementRegistry.attachElementBefore(
-                VanillaHudElements.CHAT,
-                PollutedWorldMod.id("pollution_boundary_overlay"),
-                (graphics, tickCounter) -> PollutionBoundaryOverlayRenderer.render(graphics)
-        );
-
-         */
-        /*
-        LevelRenderEvents.END_MAIN.register(context -> {
-            PollutionBoundaryWorldRenderer.render(context);
-        });
-
-         */
 
     }
 }
