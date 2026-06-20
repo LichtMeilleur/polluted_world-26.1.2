@@ -1,0 +1,17 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "polluted_world:gas_mask": 26
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 1267,
+      "minecraft:walk_one_cm": 6628,
+      "minecraft:total_world_time": 15313,
+      "minecraft:leave_game": 1,
+      "minecraft:play_time": 1267,
+      "minecraft:jump": 1,
+      "minecraft:time_since_death": 1267
+    }
+  },
+  "DataVersion": 4790
+}

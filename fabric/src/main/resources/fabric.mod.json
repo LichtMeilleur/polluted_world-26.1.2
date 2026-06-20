@@ -17,7 +17,7 @@
 			"com.licht_meilleur.polluted_world.PollutedWorldTerraBlender"
 		],
 		"client": [
-			"com.licht_meilleur.polluted_world.PollutedWorldClient"
+			"com.licht_meilleur.polluted_world.client.PollutedWorldClient"
 		]
 	},
 	"depends": {

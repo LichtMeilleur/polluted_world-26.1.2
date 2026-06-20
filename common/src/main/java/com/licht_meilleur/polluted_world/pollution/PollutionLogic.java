@@ -1,6 +1,7 @@
 package com.licht_meilleur.polluted_world.pollution;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
+import com.licht_meilleur.polluted_world.item.GasMaskItem;
 import com.licht_meilleur.polluted_world.world.ModBiomeTags;
 import com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor;
 import net.minecraft.core.BlockPos;
@@ -8,6 +9,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
@@ -47,11 +49,19 @@ public final class PollutionLogic {
         int pollutionLevel = getPollutionLevel(level, player.blockPosition());
         if (pollutionLevel <= 0) return;
 
-        if (hasGasMask(player)) {
-            ItemStack filter = findFilter(player);
+        if (pollutionLevel > 0 && player.tickCount % 6 == 0) {
+            spawnPollutionAsh(level, player);
+        }
 
-            if (!filter.isEmpty()) {
-                damageFilter(player, filter);
+        if (hasGasMask(player)) {
+            ItemStack mask = player.getItemBySlot(EquipmentSlot.HEAD);
+
+            if (GasMaskItem.hasInstalledFilter(mask)) {
+
+                if (player.tickCount % DAMAGE_INTERVAL == 0) {
+                    GasMaskItem.damageInstalledFilter(mask, 1);
+                }
+
                 return;
             }
 
@@ -123,14 +133,10 @@ public final class PollutionLogic {
         return hasGasMask(player) && !findFilter(player).isEmpty();
     }
     public static boolean hasFilter(ServerPlayer player) {
-
         Inventory inv = player.getInventory();
 
         for (int i = 0; i < inv.getContainerSize(); i++) {
-
-            ItemStack stack = inv.getItem(i);
-
-            if (isItem(stack, "filter")) {
+            if (isFilter(inv.getItem(i))) {
                 return true;
             }
         }
@@ -230,4 +236,85 @@ public final class PollutionLogic {
             }
         }
     }
+    private static int getMaskOverlayStage(ItemStack gasMask) {
+        if (gasMask.isEmpty()) {
+            return 4;
+        }
+
+        int max = gasMask.getMaxDamage();
+        if (max <= 0) {
+            return 0;
+        }
+
+        int current = gasMask.getDamageValue();
+        float remaining = 1.0F - ((float) current / max);
+
+        if (remaining > 0.75F) return 0;
+        if (remaining > 0.50F) return 1;
+        if (remaining > 0.25F) return 2;
+        if (remaining > 0.00F) return 3;
+
+        return 4;
+    }
+    public static boolean isGasMaskStack(ItemStack stack) {
+        return isItem(stack, "gas_mask");
+    }
+
+    public static boolean isFilterStack(ItemStack stack) {
+        return isFilter(stack);
+    }
+
+    public static ItemStack findFilterClient(net.minecraft.world.entity.player.Player player) {
+        Inventory inv = player.getInventory();
+
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+
+            if (isItem(stack, "high_filter")) {
+                return stack;
+            }
+        }
+
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+
+            if (isItem(stack, "filter")) {
+                return stack;
+            }
+        }
+
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            ItemStack stack = inv.getItem(i);
+
+            if (isItem(stack, "poor_filter")) {
+                return stack;
+            }
+        }
+
+        return ItemStack.EMPTY;
+    }
+
+
+    private static void spawnPollutionAsh(ServerLevel level, ServerPlayer player) {
+        RandomSource random = level.getRandom();
+
+        for (int i = 0; i < 60; i++) {
+            double x = player.getX() + (random.nextDouble() - 0.5D) * 18.0D;
+            double y = player.getY() + 2.0D + random.nextDouble() * 6.0D;
+            double z = player.getZ() + (random.nextDouble() - 0.5D) * 18.0D;
+
+            level.sendParticles(
+                    net.minecraft.core.particles.ParticleTypes.SMOKE,
+                    x,
+                    y,
+                    z,
+                    1,
+                    0.02D,
+                    -0.05D,
+                    0.02D,
+                    0.01D
+            );
+        }
+    }
+
 }

@@ -1,6 +1,7 @@
 package com.licht_meilleur.polluted_world.world;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
+import com.licht_meilleur.polluted_world.registry.ModBlocks;
 import com.licht_meilleur.polluted_world.world.definition.RailDefinition;
 import com.licht_meilleur.polluted_world.world.definition.SideDungeonDefinition;
 import com.licht_meilleur.polluted_world.world.definition.StationDefinition;
@@ -10,15 +11,21 @@ import com.licht_meilleur.polluted_world.world.registry.SideDungeonRegistry;
 import com.licht_meilleur.polluted_world.world.registry.StationRegistry;
 import com.licht_meilleur.polluted_world.world.registry.WeightedPicker;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
+import net.minecraft.world.phys.AABB;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -188,8 +195,17 @@ public class UnitChainTestBuilder {
             stationIndex++;
         }
 
+        placeSurfaceRuinsAroundStationEntrances(level, nodes, units);
         placeSurfaceRuinsAroundSurfaceAnchors(level, nodes, units);
         placeFarSurfaceRuins(level, nodes, units, origin);
+
+        placeRandomCorpseLoots(level, nodes, units);
+
+
+        replantCropsNearFarmland(level, nodes);
+        cleanupCropDropsNearVillages(level, nodes);
+
+
 
         int barrierCount = nodes.stream()
                 .mapToInt(StructureNode::barrierCount)
@@ -1106,7 +1122,8 @@ public class UnitChainTestBuilder {
             throw new IllegalStateException("Failed to place structure: " + structureName);
         }
 
-        return com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor.processAndReturn(
+
+        StructureNode node = com.licht_meilleur.polluted_world.world.spawn.PollutedSpawnMarkerProcessor.processAndReturn(
                 level,
                 new StructureNode(
                         structureName,
@@ -1118,6 +1135,11 @@ public class UnitChainTestBuilder {
                         barriers
                 )
         );
+
+        com.licht_meilleur.polluted_world.world.loot.PollutedLootMarkerProcessor.process(level, node);
+
+        return node;
+
     }
 
     private static void clearReplaceableBlocksInTemplateArea(
@@ -1296,6 +1318,10 @@ public class UnitChainTestBuilder {
 
             BlockPos surfacePos = new BlockPos(near.getX(), y, near.getZ());
 
+            if (!level.getBlockState(surfacePos.below()).isSolid()) {
+                continue;
+            }
+
             BlockPos anchorLocalPos = getLocalMarkerPos(
                     template,
                     definition.anchorMarker(),
@@ -1370,8 +1396,8 @@ public class UnitChainTestBuilder {
             List<UnitBounds> units,
             BlockPos origin
     ) {
-        for (int i = 0; i < 12; i++) {
-            tryPlaceSurfaceRuinNear(level, nodes, units, origin, 800, 3000);
+        for (int i = 0; i < 24; i++) {
+            tryPlaceSurfaceRuinNear(level, nodes, units, origin, 700, 3500);
         }
     }
 
@@ -1463,6 +1489,233 @@ public class UnitChainTestBuilder {
             return;
         }
     }
+    private static void placeRandomCorpseLoots(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units
+    ) {
+        int placed = 0;
+        int targetCount = 40;
+
+        for (StructureNode node : new ArrayList<>(nodes)) {
+            if (placed >= targetCount) {
+                return;
+            }
+
+            if (node.structureName().startsWith("station_village")) {
+                continue;
+            }
+
+            int attemptsPerNode = 4;
+
+            for (int i = 0; i < attemptsPerNode && placed < targetCount; i++) {
+                if (level.getRandom().nextInt(3) != 0) {
+                    continue;
+                }
+
+                if (tryPlaceRandomCorpseNearNode(level, nodes, units, node)) {
+                    placed++;
+                }
+            }
+        }
+    }
+
+    private static boolean tryPlaceRandomCorpseNearNode(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units,
+            StructureNode node
+    ) {
+        for (int attempt = 0; attempt < 24; attempt++) {
+            int x = node.minX() + level.getRandom().nextInt(Math.max(1, node.maxX() - node.minX()));
+            int z = node.minZ() + level.getRandom().nextInt(Math.max(1, node.maxZ() - node.minZ()));
+            int y = node.minY() + level.getRandom().nextInt(Math.max(1, node.maxY() - node.minY()));
+
+            BlockPos base = new BlockPos(x, y, z);
+
+            BlockPos pos = findCorpsePlacePos(level, base);
+            if (pos == null) {
+                continue;
+            }
+
+            if (isTooCloseToImportantMarker(nodes, pos)) {
+                continue;
+            }
+
+
+
+            // unitsは駅/レール全体なので、ここで全体衝突を見ると常に弾く可能性があります。
+            // なので死体同士の衝突だけ見たい場合は、corpse用boundsリストを別にするのが理想。
+            // まずは重要マーカー回避＋設置可能判定で置きます。
+
+            level.setBlock(
+                    pos,
+                    randomCorpseState(level, node),
+                    Block.UPDATE_CLIENTS
+            );
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private static BlockPos findCorpsePlacePos(ServerLevel level, BlockPos base) {
+        for (int dy = -12; dy <= 12; dy++) {
+            BlockPos pos = base.offset(0, dy, 0);
+
+            if (!level.getBlockState(pos.below()).isSolid()) {
+                continue;
+            }
+
+            if (!level.getBlockState(pos).isAir()) {
+                continue;
+            }
+
+            return pos;
+        }
+
+        return null;
+    }
+    private static boolean isTooCloseToImportantMarker(List<StructureNode> nodes, BlockPos pos) {
+        for (StructureNode node : nodes) {
+            for (StructureTemplate.StructureBlockInfo info : node.jigsaws()) {
+                String marker = getJigsawName(info);
+
+                if (marker.contains("rail_in")
+                        || marker.contains("rail_out")
+                        || marker.contains("rail_gate")
+                        || marker.contains("west_")
+                        || marker.contains("east_")
+                        || marker.contains("entrance")
+                        || marker.contains("surface_anchor")) {
+
+                    if (info.pos().distSqr(pos) < 25.0D) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private static void replantCropsNearFarmland(ServerLevel level, List<StructureNode> nodes) {
+        for (StructureNode node : nodes) {
+            if (!node.structureName().startsWith("station_village")) {
+                continue;
+            }
+
+            BlockPos min = new BlockPos(node.minX() - 2, node.minY() - 2, node.minZ() - 2);
+            BlockPos max = new BlockPos(node.maxX() + 2, node.maxY() + 2, node.maxZ() + 2);
+
+            for (BlockPos pos : BlockPos.betweenClosed(min, max)) {
+                if (!level.getBlockState(pos).is(Blocks.FARMLAND)) {
+                    continue;
+                }
+
+                BlockPos cropPos = pos.above();
+
+                if (!level.getBlockState(cropPos).isAir()) {
+                    continue;
+                }
+
+                level.setBlock(
+                        cropPos,
+                        randomCrop(level),
+                        Block.UPDATE_CLIENTS
+                );
+            }
+        }
+    }
+
+    private static net.minecraft.world.level.block.state.BlockState randomCrop(ServerLevel level) {
+        int roll = level.getRandom().nextInt(4);
+
+        return switch (roll) {
+            case 0 -> Blocks.WHEAT.defaultBlockState();
+            case 1 -> Blocks.CARROTS.defaultBlockState();
+            case 2 -> Blocks.POTATOES.defaultBlockState();
+            default -> Blocks.BEETROOTS.defaultBlockState();
+        };
+    }
+
+    private static void cleanupCropDropsNearVillages(ServerLevel level, List<StructureNode> nodes) {
+        for (StructureNode node : nodes) {
+            if (!node.structureName().startsWith("station_village")) {
+                continue;
+            }
+
+            AABB area = new AABB(
+                    node.minX() - 4,
+                    node.minY() - 4,
+                    node.minZ() - 4,
+                    node.maxX() + 4,
+                    node.maxY() + 4,
+                    node.maxZ() + 4
+            );
+
+            for (net.minecraft.world.entity.item.ItemEntity itemEntity
+                    : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, area)) {
+
+                ItemStack stack = itemEntity.getItem();
+
+                if (isCropDrop(stack)) {
+                    itemEntity.discard();
+                }
+            }
+        }
+    }
+
+    private static boolean isCropDrop(ItemStack stack) {
+        return stack.is(Items.WHEAT)
+                || stack.is(Items.WHEAT_SEEDS)
+                || stack.is(Items.CARROT)
+                || stack.is(Items.POTATO)
+                || stack.is(Items.BEETROOT)
+                || stack.is(Items.BEETROOT_SEEDS);
+    }
+
+    private static BlockState randomCorpseState(ServerLevel level, StructureNode node) {
+        var def = WeightedPicker.pick(
+                level,
+                com.licht_meilleur.polluted_world.world.registry.CorpseLootRegistry.ALL,
+                com.licht_meilleur.polluted_world.world.definition.CorpseLootDefinition::weight
+        );
+
+        Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(level.getRandom());
+
+        return switch (def.blockName()) {
+            case "corpse_chest_01" -> ModBlocks.CORPSE_CHEST_01.defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, facing);
+
+            default -> ModBlocks.CORPSE_CHEST_01.defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, facing);
+        };
+    }
+
+    private static void placeSurfaceRuinsAroundStationEntrances(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> units
+    ) {
+        List<StructureNode> entrances = nodes.stream()
+                .filter(node -> node.structureName().startsWith("station_entrance"))
+                .toList();
+
+        for (StructureNode entrance : entrances) {
+            BlockPos center = new BlockPos(
+                    (entrance.minX() + entrance.maxX()) / 2,
+                    entrance.maxY(),
+                    (entrance.minZ() + entrance.maxZ()) / 2
+            );
+
+            for (int i = 0; i < 5; i++) {
+                tryPlaceSurfaceRuinNear(level, nodes, units, center, 160, 700);
+            }
+        }
+    }
+
 
 
 }

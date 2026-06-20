@@ -1,0 +1,17 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": { "min": 3, "max": 6 },
+      "entries": [
+        { "type": "minecraft:item", "name": "minecraft:iron_ingot", "weight": 7 },
+        { "type": "minecraft:item", "name": "minecraft:copper_ingot", "weight": 7 },
+        { "type": "minecraft:item", "name": "minecraft:redstone", "weight": 6 },
+        { "type": "minecraft:item", "name": "minecraft:lever", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:rail", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:piston", "weight": 2 },
+        { "type": "minecraft:item", "name": "minecraft:minecart", "weight": 1 }
+      ]
+    }
+  ]
+}

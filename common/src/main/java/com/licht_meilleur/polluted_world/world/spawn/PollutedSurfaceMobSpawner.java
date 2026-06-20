@@ -41,6 +41,10 @@ public final class PollutedSurfaceMobSpawner {
     }
 
     private static void trySpawnSurfaceInLoadedChunks(ServerLevel level, ServerPlayer player) {
+        if (isMonsterCapReached(level, player.blockPosition(), 96, 10)) {
+            return;
+        }
+
         RandomSource random = level.getRandom();
 
         // テスト中は確率を緩める
@@ -81,52 +85,13 @@ public final class PollutedSurfaceMobSpawner {
         }
     }
 
-    private static void forceSpawnTestZombie(ServerLevel level, ServerPlayer player) {
-        BlockPos pos = player.blockPosition().offset(3, 0, 3);
 
-        Mob mob = EntityType.ZOMBIE.create(level, EntitySpawnReason.COMMAND);
-        if (mob == null) {
 
+    private static void trySpawnNearRail(ServerLevel level, ServerPlayer player) {
+        if (isMonsterCapReached(level, player.blockPosition(), 96, 10)) {
             return;
         }
 
-        mob.snapTo(
-                pos.getX() + 0.5D,
-                pos.getY(),
-                pos.getZ() + 0.5D,
-                level.getRandom().nextFloat() * 360.0F,
-                0.0F
-        );
-
-        mob.addTag(PollutedSpawnMarkerProcessor.NO_SUN_BURN_TAG);
-        mob.setPersistenceRequired();
-
-        boolean added = level.addFreshEntity(mob);
-
-    }
-
-    private static void trySpawnSurface(ServerLevel level, ServerPlayer player) {
-        RandomSource random = level.getRandom();
-
-        //if (random.nextInt(3) != 0) return;
-
-        BlockPos pos = randomAround(player.blockPosition(), random, 28, 64);
-        int y = level.getHeight(
-                Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
-                pos.getX(),
-                pos.getZ()
-        );
-
-        BlockPos spawnPos = new BlockPos(pos.getX(), y, pos.getZ());
-
-        //if (!PollutionLogic.isPollutedPosition(level, spawnPos)) return;
-        if (!level.canSeeSky(spawnPos)) return;
-        if (isNearVillageArea(level, spawnPos)) return;
-
-        spawnCommon(level, spawnPos);
-    }
-
-    private static void trySpawnNearRail(ServerLevel level, ServerPlayer player) {
         RandomSource random = level.getRandom();
 
         if (random.nextInt(5) != 0) return;
@@ -233,4 +198,21 @@ public final class PollutedSurfaceMobSpawner {
             mob.setItemSlot(EquipmentSlot.MAINHAND, new ItemStack(Items.BOW));
         }
     }
+
+    private static boolean isMonsterCapReached(
+            ServerLevel level,
+            BlockPos center,
+            int radius,
+            int max
+    ) {
+        AABB area = new AABB(center).inflate(radius, 48.0D, radius);
+
+        int count = level.getEntitiesOfClass(
+                net.minecraft.world.entity.monster.Monster.class,
+                area
+        ).size();
+
+        return count >= max;
+    }
+
 }

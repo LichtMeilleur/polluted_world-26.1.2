@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 public class PollutedRegion extends Region {
 
     public PollutedRegion() {
-        super(PollutedWorldMod.id("polluted_region"), RegionType.OVERWORLD, 600);
+        super(PollutedWorldMod.id("polluted_region"), RegionType.OVERWORLD, 150);
     }
 
 
@@ -48,11 +48,11 @@ public class PollutedRegion extends Region {
         // オアシス：かなりレア
         addBiome(
                 mapper,
-                Climate.Parameter.span(0.65F, 1.0F),    // 暑い// temperature 温度
-                Climate.Parameter.span(0.75F, 1.0F),    // 湿った// humidity 湿度
-                Climate.Parameter.span(-0.20F, 0.35F),  // continentalness 大陸性
-                Climate.Parameter.span(-0.25F, 0.25F),  // erosion 侵食
-                Climate.Parameter.span(0.55F, 1.0F),    // weirdness 変則性
+                Climate.Parameter.span(0.82F, 1.0F),    // 暑い// temperature 温度
+                Climate.Parameter.span(0.88F, 1.0F),    // 湿った// humidity 湿度
+                Climate.Parameter.span(-0.10F, 0.15F),  // continentalness 大陸性
+                Climate.Parameter.span(-0.12F, 0.12F),  // erosion 侵食
+                Climate.Parameter.span(0.02F, 1.0F),    // weirdness 変則性
                 ModBiomes.CLEAN_OASIS
         );
     }

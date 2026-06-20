@@ -232,10 +232,24 @@ public class PollutedStructurePlacer {
             ServerPlayer player,
             BlockPos nearPos
     ) {
+        if (!PollutedWorldGeneratorCheck.isPollutedWorld(level)) {
+            return new NetworkResult(0, 0, false);
+        }
+
         StructureTemplate entranceTemplate = load(level, "station_entrance_01");
 
+
+
         BlockPos surfacePos = findFlatSurface(level, nearPos, SURFACE_BASE_Y, 96)
-                .orElseThrow(() -> new IllegalStateException("No valid surface found near " + nearPos));
+                .orElse(null);
+
+        if (surfacePos == null) {
+            return new NetworkResult(
+                    0,
+                    0,
+                    false
+            );
+        }
 
         BlockPos anchorLocalPos = getLocalMarkerPos(
                 entranceTemplate,
@@ -427,6 +441,10 @@ public class PollutedStructurePlacer {
             ServerPlayer player,
             BlockPos nearPos
     ) {
+        if (!PollutedWorldGeneratorCheck.isPollutedWorld(level)) {
+            return new NetworkResult(0, 0, false);
+        }
+
         var definition = com.licht_meilleur.polluted_world.world.registry.WeightedPicker.pick(
                 level,
                 com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL,
@@ -436,8 +454,15 @@ public class PollutedStructurePlacer {
         StructureTemplate template = load(level, definition.structureName());
 
         BlockPos surfacePos = findFlatSurface(level, nearPos, SURFACE_BASE_Y, 96)
-                .orElseThrow(() -> new IllegalStateException("No valid surface found near " + nearPos));
+                .orElse(null);
 
+        if (surfacePos == null) {
+            return new NetworkResult(
+                    0,
+                    0,
+                    false
+            );
+        }
         BlockPos anchorLocalPos = getLocalMarkerPos(
                 template,
                 definition.anchorMarker(),
@@ -489,6 +514,8 @@ public class PollutedStructurePlacer {
 
         return false;
     }
+
+
 
 
 }

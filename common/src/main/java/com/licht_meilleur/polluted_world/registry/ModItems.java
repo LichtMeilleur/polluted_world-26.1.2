@@ -11,21 +11,25 @@ public final class ModItems {
 
     public static final Item ACTIVATED_CHARCOAL =
             new Item(props("activated_charcoal"));
-    public static final Item GAS_MASK = new GasMaskItem(props("gas_mask"));
+    public static final Item GAS_MASK =
+            new GasMaskItem(
+                    props("gas_mask")
+                            .durability(100)
+            );
     public static final Item POOR_FILTER =
             new FilterItem(
                     props("poor_filter")
-                            .durability(400)
+                            .durability(200)
             );
     public static final Item FILTER =
             new FilterItem(
                     props("filter")
-                            .durability(1200)
+                            .durability(600)
             );
     public static final Item HIGH_FILTER =
             new FilterItem(
                     props("high_filter")
-                            .durability(3000)
+                            .durability(1200)
             );
 
     private ModItems() {

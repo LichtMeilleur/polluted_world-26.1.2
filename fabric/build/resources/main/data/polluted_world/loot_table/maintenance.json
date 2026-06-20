@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:chest",
+  "pools": [
+    {
+      "rolls": { "min": 3, "max": 6 },
+      "entries": [
+        { "type": "minecraft:item", "name": "polluted_world:activated_charcoal", "weight": 8 },
+        { "type": "minecraft:item", "name": "polluted_world:poor_filter", "weight": 6 },
+        { "type": "minecraft:item", "name": "polluted_world:filter", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:string", "weight": 5 },
+        { "type": "minecraft:item", "name": "minecraft:leather", "weight": 4 },
+        { "type": "minecraft:item", "name": "minecraft:glass", "weight": 3 },
+        { "type": "minecraft:item", "name": "minecraft:iron_ingot", "weight": 2 },
+        { "type": "minecraft:item", "name": "polluted_world:gas_mask", "weight": 1 }
+      ]
+    }
+  ]
+}

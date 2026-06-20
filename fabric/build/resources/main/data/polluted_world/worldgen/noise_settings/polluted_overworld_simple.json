@@ -130,7 +130,7 @@
             {
               "type": "minecraft:block",
               "result_state": {
-                "Name": "minecraft:coarse_dirt"
+                "Name": "minecraft:grass_block"
               }
             }
           ]

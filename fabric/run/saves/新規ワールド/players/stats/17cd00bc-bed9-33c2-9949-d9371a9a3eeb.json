@@ -1,0 +1,19 @@
+{
+  "stats": {
+    "minecraft:used": {
+      "minecraft:golden_apple": 3
+    },
+    "minecraft:custom": {
+      "minecraft:time_since_rest": 1215,
+      "minecraft:walk_one_cm": 10246,
+      "minecraft:total_world_time": 1344,
+      "minecraft:leave_game": 1,
+      "minecraft:damage_taken": 90,
+      "minecraft:play_time": 1215,
+      "minecraft:damage_absorbed": 50,
+      "minecraft:jump": 1,
+      "minecraft:time_since_death": 1215
+    }
+  },
+  "DataVersion": 4790
+}

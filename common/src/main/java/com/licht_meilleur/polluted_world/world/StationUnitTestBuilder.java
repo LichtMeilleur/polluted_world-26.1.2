@@ -91,6 +91,8 @@ public class StationUnitTestBuilder {
         );
         nodes.add(westDownGate);
 
+
+
         int barrierCount = nodes.stream()
                 .mapToInt(StructureNode::barrierCount)
                 .sum();
