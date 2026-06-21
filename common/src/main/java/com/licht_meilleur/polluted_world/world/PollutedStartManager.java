@@ -32,18 +32,7 @@ public class PollutedStartManager {
                     firstPlayer.blockPosition()
             );
 
-            for (int i = 0; i < 6; i++) {
-                BlockPos around = firstPlayer.blockPosition().offset(
-                        level.getRandom().nextInt(512) - 256,
-                        0,
-                        level.getRandom().nextInt(512) - 256
-                );
 
-                try {
-                    PollutedStructurePlacer.placeSurfaceRuinTest(level, firstPlayer, around);
-                } catch (Exception ignored) {
-                }
-            }
 
             // placeUnitChainOnSurface 内でバリア位置へテレポート済みなので、その位置を保存
             state.markGenerated(firstPlayer.blockPosition());
@@ -71,6 +60,42 @@ public class PollutedStartManager {
                 player.fallDistance = 0.0F;
 
                 state.markFirstJoined(player.getUUID());
+            }
+        }
+    }
+    private static void placeSurfaceRuinsAroundStart(ServerLevel level, ServerPlayer player, BlockPos center) {
+        // 駅周辺：密
+        placeSurfaceRuinsInRing(level, player, center, 48, 160, 10);
+
+        // 中距離：普通
+        placeSurfaceRuinsInRing(level, player, center, 160, 360, 6);
+
+        // 遠距離：まばら
+        placeSurfaceRuinsInRing(level, player, center, 360, 720, 4);
+    }
+
+    private static void placeSurfaceRuinsInRing(
+            ServerLevel level,
+            ServerPlayer player,
+            BlockPos center,
+            int minRadius,
+            int maxRadius,
+            int count
+    ) {
+        var random = level.getRandom();
+
+        for (int i = 0; i < count; i++) {
+            double angle = random.nextDouble() * Math.PI * 2.0D;
+            int radius = minRadius + random.nextInt(maxRadius - minRadius + 1);
+
+            int x = center.getX() + (int) Math.round(Math.cos(angle) * radius);
+            int z = center.getZ() + (int) Math.round(Math.sin(angle) * radius);
+
+            BlockPos around = new BlockPos(x, center.getY(), z);
+
+            try {
+                PollutedStructurePlacer.placeSurfaceRuinTest(level, player, around);
+            } catch (Exception ignored) {
             }
         }
     }

@@ -1,15 +1,20 @@
 package com.licht_meilleur.polluted_world.world;
 
 import com.licht_meilleur.polluted_world.PollutedWorldMod;
+import com.licht_meilleur.polluted_world.registry.PollutedBlocks;
 import net.minecraft.core.BlockPos;
 
 
+import net.minecraft.core.Direction;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.HorizontalDirectionalBlock;
 import net.minecraft.world.level.block.Rotation;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructurePlaceSettings;
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplate;
 
@@ -484,7 +489,13 @@ public class PollutedStructurePlacer {
         );
 
         int barrierCount = node.barrierCount();
+
+
+        SurfaceCorpsePlacer.placeAroundSurfaceStructure(level, node);
+
         node.removeMarkers(level);
+
+
 
         return new NetworkResult(
                 1,
@@ -513,6 +524,101 @@ public class PollutedStructurePlacer {
         }
 
         return false;
+    }
+
+
+
+    public final class SurfaceCorpsePlacer {
+        private SurfaceCorpsePlacer() {
+        }
+
+        public static void placeAroundSurfaceStructure(ServerLevel level, StructureNode node) {
+            String name = node.structureName();
+
+            boolean surface = com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL.stream()
+                    .anyMatch(def -> def.structureName().equals(name));
+
+            if (!surface) {
+                return;
+            }
+
+            int attempts = 18 + level.getRandom().nextInt(15); // 18〜32回
+            int radius = 22;
+            int placed = 0;
+            int maxPlaced = level.getRandom().nextInt(2); // 0〜1個
+
+            for (int i = 0; i < attempts && placed < maxPlaced; i++) {
+                BlockPos base = node.origin().offset(
+                        level.getRandom().nextInt(radius * 2 + 1) - radius,
+                        0,
+                        level.getRandom().nextInt(radius * 2 + 1) - radius
+                );
+
+                BlockPos pos = findSurfaceCorpsePos(level, base);
+                if (pos == null) {
+                    continue;
+                }
+
+                level.setBlock(
+                        pos,
+                        randomSurfaceCorpseState(level),
+                        Block.UPDATE_CLIENTS
+                );
+
+                placed++;
+            }
+        }
+
+        private static BlockPos findSurfaceCorpsePos(ServerLevel level, BlockPos base) {
+            int y = level.getHeight(
+                    Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
+                    base.getX(),
+                    base.getZ()
+            );
+
+            BlockPos pos = new BlockPos(base.getX(), y, base.getZ());
+
+            if (!level.getBlockState(pos).isAir()) {
+                return null;
+            }
+
+            if (!level.getBlockState(pos.above()).isAir()) {
+                return null;
+            }
+
+            BlockState ground = level.getBlockState(pos.below());
+
+            if (!ground.isSolid()) {
+                return null;
+            }
+
+            // 水中や溶岩上は避ける
+            if (!level.getFluidState(pos).isEmpty()) {
+                return null;
+            }
+
+            return pos;
+        }
+
+        private static BlockState randomSurfaceCorpseState(ServerLevel level) {
+            Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(level.getRandom());
+
+            int roll = level.getRandom().nextInt(100);
+
+            // 地表は民間多め、軍事/研究は少なめ
+            if (roll < 75) {
+                return PollutedBlocks.corpseChest03().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, facing); // civilian
+            }
+
+            if (roll < 92) {
+                return PollutedBlocks.corpseChest01().defaultBlockState()
+                        .setValue(HorizontalDirectionalBlock.FACING, facing); // military
+            }
+
+            return PollutedBlocks.corpseChest02().defaultBlockState()
+                    .setValue(HorizontalDirectionalBlock.FACING, facing); // research
+        }
     }
 
 

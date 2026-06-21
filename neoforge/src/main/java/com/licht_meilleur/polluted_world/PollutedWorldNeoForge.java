@@ -36,6 +36,9 @@ public class PollutedWorldNeoForge {
         NeoForgeFeatures.register(modBus);
         NeoForgeBlocks.register(modBus);
         PollutedBlocks.setCorpseChest01(NeoForgeBlocks.CORPSE_CHEST_01::get);
+        PollutedBlocks.setCorpseChest02(NeoForgeBlocks.CORPSE_CHEST_02::get);
+        PollutedBlocks.setCorpseChest03(NeoForgeBlocks.CORPSE_CHEST_03::get);
+
 
         Regions.register(new PollutedRegion());
 

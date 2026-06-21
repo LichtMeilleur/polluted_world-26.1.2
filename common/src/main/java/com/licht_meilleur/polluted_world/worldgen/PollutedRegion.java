@@ -14,7 +14,7 @@ import java.util.function.Consumer;
 public class PollutedRegion extends Region {
 
     public PollutedRegion() {
-        super(PollutedWorldMod.id("polluted_region"), RegionType.OVERWORLD, 150);
+        super(PollutedWorldMod.id("polluted_region"), RegionType.OVERWORLD, 1000);
     }
 
 

@@ -6,10 +6,8 @@ import com.licht_meilleur.polluted_world.world.definition.RailDefinition;
 import com.licht_meilleur.polluted_world.world.definition.SideDungeonDefinition;
 import com.licht_meilleur.polluted_world.world.definition.StationDefinition;
 import com.licht_meilleur.polluted_world.world.layout.UnitBounds;
-import com.licht_meilleur.polluted_world.world.registry.RailRegistry;
-import com.licht_meilleur.polluted_world.world.registry.SideDungeonRegistry;
-import com.licht_meilleur.polluted_world.world.registry.StationRegistry;
-import com.licht_meilleur.polluted_world.world.registry.WeightedPicker;
+import com.licht_meilleur.polluted_world.world.registry.*;
+import com.licht_meilleur.polluted_world.world.registry.CorpseLootRegistry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
@@ -52,6 +50,7 @@ public class UnitChainTestBuilder {
     ) {
         List<StructureNode> nodes = new ArrayList<>();
         List<UnitBounds> units = new ArrayList<>();
+        List<UnitBounds> surfaceUnits = new ArrayList<>();
         List<StationDefinition> stationDeck = createStationDeck();
         List<RailDefinition> railDeck = createRailDeck(level);
         List<SideDungeonDefinition> westDungeonDeck = new ArrayList<>(SideDungeonRegistry.west());
@@ -195,9 +194,16 @@ public class UnitChainTestBuilder {
             stationIndex++;
         }
 
-        placeSurfaceRuinsAroundStationEntrances(level, nodes, units);
+        placeSurfaceRuinsAroundSurfaceCenters(level, nodes, surfaceUnits);
+        /*
         placeSurfaceRuinsAroundSurfaceAnchors(level, nodes, units);
         placeFarSurfaceRuins(level, nodes, units, origin);
+
+
+         */
+
+        placeFixedCorpseLootMarkers(level, nodes);
+
 
         placeRandomCorpseLoots(level, nodes, units);
 
@@ -1302,6 +1308,8 @@ public class UnitChainTestBuilder {
 
             BlockPos near = anchor.offset(dx, 0, dz);
 
+
+
             var definition = WeightedPicker.pick(
                     level,
                     com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL,
@@ -1341,9 +1349,11 @@ public class UnitChainTestBuilder {
                     48
             );
 
+
             boolean collides = false;
 
             for (UnitBounds unit : units) {
+
                 if (candidate.intersects(unit)) {
                     collides = true;
                     break;
@@ -1369,8 +1379,13 @@ public class UnitChainTestBuilder {
                     48
             ));
 
+            PollutedStructurePlacer.SurfaceCorpsePlacer.placeAroundSurfaceStructure(level, node);
+
+
+
             return;
         }
+
     }
 
     private static BlockPos getLocalMarkerPos(
@@ -1390,16 +1405,8 @@ public class UnitChainTestBuilder {
 
 
 
-    private static void placeFarSurfaceRuins(
-            ServerLevel level,
-            List<StructureNode> nodes,
-            List<UnitBounds> units,
-            BlockPos origin
-    ) {
-        for (int i = 0; i < 24; i++) {
-            tryPlaceSurfaceRuinNear(level, nodes, units, origin, 700, 3500);
-        }
-    }
+
+
 
     private static void tryPlaceSurfaceRuinNear(
             ServerLevel level,
@@ -1407,25 +1414,23 @@ public class UnitChainTestBuilder {
             List<UnitBounds> units,
             BlockPos center,
             int minDistance,
-            int maxDistance
+            int maxDistance,
+            int margin
     ) {
         for (int attempt = 0; attempt < 32; attempt++) {
-            int distance = minDistance + level.getRandom().nextInt(maxDistance - minDistance + 1);
+            double angle = level.getRandom().nextDouble() * Math.PI * 2.0D;
 
-            int dx = level.getRandom().nextBoolean() ? distance : -distance;
-            int dz = level.getRandom().nextInt(distance * 2 + 1) - distance;
+            int distance = minDistance
+                    + level.getRandom().nextInt(maxDistance - minDistance + 1);
 
-            if (level.getRandom().nextBoolean()) {
-                int t = dx;
-                dx = dz;
-                dz = t;
-            }
+            int dx = (int)Math.round(Math.cos(angle) * distance);
+            int dz = (int)Math.round(Math.sin(angle) * distance);
 
             BlockPos near = center.offset(dx, 0, dz);
 
             var definition = WeightedPicker.pick(
                     level,
-                    com.licht_meilleur.polluted_world.world.registry.SurfaceStructureRegistry.ALL,
+                    SurfaceStructureRegistry.ALL,
                     com.licht_meilleur.polluted_world.world.definition.SurfaceStructureDefinition::weight
             );
 
@@ -1437,7 +1442,7 @@ public class UnitChainTestBuilder {
                     near.getZ()
             );
 
-            BlockPos surfacePos = new BlockPos(near.getX(), y, near.getZ());
+            BlockPos surfacePos = new BlockPos(near.getX(), y - 1, near.getZ());
 
             BlockPos localAnchor = getLocalMarkerPos(
                     template,
@@ -1455,8 +1460,14 @@ public class UnitChainTestBuilder {
                     "surface_ruin_candidate",
                     structureOrigin,
                     template.getSize(),
-                    64
+                    margin
             );
+
+
+
+            if (collidesWithProtectedNode(nodes, candidate)) {
+                continue;
+            }
 
             boolean collides = false;
 
@@ -1465,6 +1476,10 @@ public class UnitChainTestBuilder {
                     collides = true;
                     break;
                 }
+            }
+
+            if (collides) {
+                continue;
             }
 
             if (collides) {
@@ -1483,8 +1498,10 @@ public class UnitChainTestBuilder {
             units.add(UnitBounds.fromNodes(
                     "surface_ruin_" + definition.structureName(),
                     List.of(node),
-                    64
+                    margin
             ));
+
+            PollutedStructurePlacer.SurfaceCorpsePlacer.placeAroundSurfaceStructure(level, node);
 
             return;
         }
@@ -1495,7 +1512,7 @@ public class UnitChainTestBuilder {
             List<UnitBounds> units
     ) {
         int placed = 0;
-        int targetCount = 40;
+        int targetCount = Math.max(1, units.size() * 2);
 
         for (StructureNode node : new ArrayList<>(nodes)) {
             if (placed >= targetCount) {
@@ -1506,10 +1523,23 @@ public class UnitChainTestBuilder {
                 continue;
             }
 
-            int attemptsPerNode = 4;
+            // 地表構造物周辺の死体は SurfaceCorpsePlacer に任せる
+            if (isSurfaceStructureNode(node)) {
+                continue;
+            }
+
+            // 駅入口の屋根上配置を避けるなら一旦これも除外
+            if (node.structureName().startsWith("station_entrance")) {
+                continue;
+            }
+
+            int attemptsPerNode = corpseRollsForNode(level, node);
 
             for (int i = 0; i < attemptsPerNode && placed < targetCount; i++) {
-                if (level.getRandom().nextInt(3) != 0) {
+
+                boolean surface = isSurfaceStructureNode(node);
+
+                if (!surface && level.getRandom().nextInt(3) != 0) {
                     continue;
                 }
 
@@ -1542,7 +1572,9 @@ public class UnitChainTestBuilder {
                 continue;
             }
 
-
+            if (isTooCloseToCorpse(level, pos)) {
+                continue;
+            }
 
             // unitsは駅/レール全体なので、ここで全体衝突を見ると常に弾く可能性があります。
             // なので死体同士の衝突だけ見たい場合は、corpse用boundsリストを別にするのが理想。
@@ -1689,6 +1721,12 @@ public class UnitChainTestBuilder {
             case "corpse_chest_01" ->
                     PollutedBlocks.corpseChest01().defaultBlockState()
                             .setValue(HorizontalDirectionalBlock.FACING, facing);
+            case "corpse_chest_02" ->
+                    PollutedBlocks.corpseChest02().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, facing);
+            case "corpse_chest_03" ->
+                    PollutedBlocks.corpseChest03().defaultBlockState()
+                            .setValue(HorizontalDirectionalBlock.FACING, facing);
 
             default ->
                     PollutedBlocks.corpseChest01().defaultBlockState()
@@ -1696,28 +1734,199 @@ public class UnitChainTestBuilder {
         };
     }
 
-    private static void placeSurfaceRuinsAroundStationEntrances(
+    private static void placeSurfaceRuinsAroundSurfaceCenters(
             ServerLevel level,
             List<StructureNode> nodes,
-            List<UnitBounds> units
+            List<UnitBounds> surfaceUnits
     ) {
-        List<StructureNode> entrances = nodes.stream()
-                .filter(node -> node.structureName().startsWith("station_entrance"))
+        List<StructureNode> centers = nodes.stream()
+                .filter(UnitChainTestBuilder::isSurfaceRuinCenter)
+                .filter(node -> node.hasMarker("polluted_world:surface_anchor"))
                 .toList();
 
-        for (StructureNode entrance : entrances) {
-            BlockPos center = new BlockPos(
-                    (entrance.minX() + entrance.maxX()) / 2,
-                    entrance.maxY(),
-                    (entrance.minZ() + entrance.maxZ()) / 2
-            );
+        for (StructureNode centerNode : centers) {
+            BlockPos center = centerNode.marker("polluted_world:surface_anchor");
 
-            for (int i = 0; i < 5; i++) {
-                tryPlaceSurfaceRuinNear(level, nodes, units, center, 160, 700);
+            // 内側：密
+            placeSurfaceRuinsInRing(level, nodes, surfaceUnits, center, 12, 48, 40, 10);
+
+            // 中間：普通
+            placeSurfaceRuinsInRing(level, nodes, surfaceUnits, center, 48, 100, 20, 18);
+
+            // 外側：まばら
+            placeSurfaceRuinsInRing(level, nodes, surfaceUnits, center, 100, 200, 10, 28);
+        }
+    }
+
+    private static boolean isSurfaceRuinCenter(StructureNode node) {
+        String name = node.structureName();
+
+        // 駅入口
+        if (name.startsWith("station_entrance")) {
+            return true;
+        }
+
+        // 地上出口つきサイドダンジョン
+        if (name.startsWith("side_dungeon")
+                || name.contains("side_dungeon")
+                || name.contains("side")) {
+            return node.hasMarker("polluted_world:surface_anchor");
+        }
+
+        return false;
+    }
+
+    private static void placeSurfaceRuinsInRing(
+            ServerLevel level,
+            List<StructureNode> nodes,
+            List<UnitBounds> surfaceUnits,
+            BlockPos center,
+            int minDistance,
+            int maxDistance,
+            int count,
+            int margin
+    ) {
+        for (int i = 0; i < count; i++) {
+            tryPlaceSurfaceRuinNear(level, nodes, surfaceUnits, center, minDistance, maxDistance, margin);
+        }
+    }
+
+    private static int corpseRollsForNode(ServerLevel level, StructureNode node) {
+        String name = node.structureName();
+
+        if (name.startsWith("station_village")) {
+            return 0;
+        }
+
+        if (isSurfaceStructureNode(node)) {
+            return 0;
+        }
+
+        if (name.startsWith("station_entrance")) {
+            return 0;
+        }
+
+        if (name.contains("rail")) {
+            return level.getRandom().nextInt(2); // 0〜1
+        }
+
+        return 0;
+    }
+
+    private static boolean isTooCloseToCorpse(
+            ServerLevel level,
+            BlockPos pos
+    ) {
+        int radius = 6;
+
+        for (BlockPos check : BlockPos.betweenClosed(
+                pos.offset(-radius, -1, -radius),
+                pos.offset(radius, 1, radius)
+        )) {
+
+            Block block = level.getBlockState(check).getBlock();
+
+            if (block == PollutedBlocks.corpseChest01()
+                    || block == PollutedBlocks.corpseChest02()
+                    || block == PollutedBlocks.corpseChest03()) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void placeFixedCorpseLootMarkers(
+            ServerLevel level,
+            List<StructureNode> nodes
+    ) {
+        for (StructureNode node : new ArrayList<>(nodes)) {
+            if (node.structureName().startsWith("station_village")) {
+                continue;
+            }
+
+            for (StructureTemplate.StructureBlockInfo info : node.jigsaws()) {
+                String marker = getMarkerName(info);
+
+                if (!CorpseLootRegistry.isCorpseMarker(marker)) {
+                    continue;
+                }
+
+                String lootTable = CorpseLootRegistry.lootTableFromMarker(marker);
+                if (lootTable == null) {
+                    continue;
+                }
+
+                BlockPos pos = info.pos();
+
+                level.setBlock(
+                        pos,
+                        corpseStateForLootTable(level, lootTable),
+                        Block.UPDATE_CLIENTS
+                );
             }
         }
     }
 
+    private static String getMarkerName(StructureTemplate.StructureBlockInfo info) {
+        if (info.nbt() == null) {
+            return "";
+        }
 
+        String name = info.nbt().getString("name").orElse("");
+        if (!name.isEmpty()) {
+            return name;
+        }
+
+        return info.nbt().getString("target").orElse("");
+    }
+
+    private static BlockState corpseStateForLootTable(ServerLevel level, String lootTable) {
+        Direction facing = Direction.Plane.HORIZONTAL.getRandomDirection(level.getRandom());
+
+        Block block = switch (lootTable) {
+            case "corpse/military" -> PollutedBlocks.corpseChest01();
+            case "corpse/research" -> PollutedBlocks.corpseChest02();
+            case "corpse/civilian" -> PollutedBlocks.corpseChest03();
+            default -> PollutedBlocks.corpseChest03();
+        };
+
+        return block.defaultBlockState()
+                .setValue(HorizontalDirectionalBlock.FACING, facing);
+    }
+
+    private static boolean isSurfaceStructureNode(StructureNode node) {
+        String name = node.structureName();
+
+        return SurfaceStructureRegistry.ALL.stream()
+                .anyMatch(def -> def.structureName().equals(name));
+    }
+
+    private static boolean collidesWithProtectedNode(List<StructureNode> nodes, UnitBounds candidate) {
+        for (StructureNode node : nodes) {
+            String name = node.structureName();
+
+            boolean protectedNode =
+                    name.startsWith("station_entrance")
+                            || name.startsWith("station_village")
+                            || name.contains("side_dungeon");
+
+            if (!protectedNode) {
+                continue;
+            }
+
+            UnitBounds protectedBounds = UnitBounds.fromNodes(
+                    "protected_" + name,
+                    List.of(node),
+                    24
+            );
+
+            if (candidate.intersects(protectedBounds)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 
 }

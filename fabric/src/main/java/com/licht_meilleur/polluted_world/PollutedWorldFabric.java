@@ -47,6 +47,34 @@ public class PollutedWorldFabric implements ModInitializer {
 
         PollutedBlocks.setCorpseChest01(() -> ModBlocks.CORPSE_CHEST_01);
 
+        Registry.register(BuiltInRegistries.BLOCK, PollutedWorldMod.id("corpse_chest_02"), ModBlocks.CORPSE_CHEST_02);
+
+        Registry.register(
+                BuiltInRegistries.ITEM,
+                PollutedWorldMod.id("corpse_chest_02"),
+                new BlockItem(
+                        ModBlocks.CORPSE_CHEST_02,
+                        new Item.Properties()
+                                .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("corpse_chest_02")))
+                )
+        );
+
+        PollutedBlocks.setCorpseChest02(() -> ModBlocks.CORPSE_CHEST_02);
+
+        Registry.register(BuiltInRegistries.BLOCK, PollutedWorldMod.id("corpse_chest_03"), ModBlocks.CORPSE_CHEST_03);
+
+        Registry.register(
+                BuiltInRegistries.ITEM,
+                PollutedWorldMod.id("corpse_chest_03"),
+                new BlockItem(
+                        ModBlocks.CORPSE_CHEST_03,
+                        new Item.Properties()
+                                .setId(ResourceKey.create(Registries.ITEM, PollutedWorldMod.id("corpse_chest_03")))
+                )
+        );
+
+        PollutedBlocks.setCorpseChest03(() -> ModBlocks.CORPSE_CHEST_03);
+
         Registry.register(BuiltInRegistries.ITEM, PollutedWorldMod.id("gas_mask"), ModItems.GAS_MASK);
         Registry.register(BuiltInRegistries.ITEM, PollutedWorldMod.id("activated_charcoal"), ModItems.ACTIVATED_CHARCOAL);
         Registry.register(BuiltInRegistries.ITEM, PollutedWorldMod.id("poor_filter"), ModItems.POOR_FILTER);

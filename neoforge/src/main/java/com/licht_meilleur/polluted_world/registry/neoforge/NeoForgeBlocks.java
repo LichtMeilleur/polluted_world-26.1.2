@@ -40,6 +40,44 @@ public final class NeoForgeBlocks {
                     )
             );
 
+    public static final DeferredBlock<Block> CORPSE_CHEST_02 =
+            BLOCKS.register("corpse_chest_02", registryName ->
+                    new CorpseLootBlock(
+                            BlockBehaviour.Properties.of()
+                                    .setId(ResourceKey.create(Registries.BLOCK, registryName))
+                                    .strength(0.8F)
+                                    .noOcclusion()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem> CORPSE_CHEST_02_ITEM =
+            BLOCK_ITEMS.register("corpse_chest_02", registryName ->
+                    new BlockItem(
+                            CORPSE_CHEST_02.get(),
+                            new Item.Properties()
+                                    .setId(ResourceKey.create(Registries.ITEM, registryName))
+                    )
+            );
+
+    public static final DeferredBlock<Block> CORPSE_CHEST_03 =
+            BLOCKS.register("corpse_chest_03", registryName ->
+                    new CorpseLootBlock(
+                            BlockBehaviour.Properties.of()
+                                    .setId(ResourceKey.create(Registries.BLOCK, registryName))
+                                    .strength(0.8F)
+                                    .noOcclusion()
+                    )
+            );
+
+    public static final DeferredItem<BlockItem> CORPSE_CHEST_03_ITEM =
+            BLOCK_ITEMS.register("corpse_chest_03", registryName ->
+                    new BlockItem(
+                            CORPSE_CHEST_03.get(),
+                            new Item.Properties()
+                                    .setId(ResourceKey.create(Registries.ITEM, registryName))
+                    )
+            );
+
     private NeoForgeBlocks() {
     }
 

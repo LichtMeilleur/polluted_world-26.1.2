@@ -1,0 +1,8 @@
+{
+	"variants": {
+		"facing=north": { "model": "polluted_world:block/corpse_chest_03" },
+		"facing=south": { "model": "polluted_world:block/corpse_chest_03", "y": 180 },
+		"facing=west": { "model": "polluted_world:block/corpse_chest_03", "y": 270 },
+		"facing=east": { "model": "polluted_world:block/corpse_chest_03", "y": 90 }
+	}
+}

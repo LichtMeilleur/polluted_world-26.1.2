@@ -14,4 +14,16 @@ public class ModBlocks {
                     .strength(0.8F)
                     .noOcclusion()
     );
+    public static final Block CORPSE_CHEST_02 = new CorpseLootBlock(
+            BlockBehaviour.Properties.of()
+                    .setId(ResourceKey.create(Registries.BLOCK, PollutedWorldMod.id("corpse_chest")))
+                    .strength(0.8F)
+                    .noOcclusion()
+    );
+    public static final Block CORPSE_CHEST_03 = new CorpseLootBlock(
+            BlockBehaviour.Properties.of()
+                    .setId(ResourceKey.create(Registries.BLOCK, PollutedWorldMod.id("corpse_chest")))
+                    .strength(0.8F)
+                    .noOcclusion()
+    );
 }
